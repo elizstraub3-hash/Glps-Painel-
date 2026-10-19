@@ -1,0 +1,71 @@
+.conteudo-largo { max-width: 1400px; }
+.salvo { font-size: 13px; color: var(--texto-3); }
+.salvo.alerta { color: var(--atencao); font-weight: 600; }
+
+.aviso-banco { background: var(--atencao-suave); color: var(--atencao); border-radius: var(--raio); padding: 12px 16px; font-size: 14px; }
+.aviso-banco strong { display: block; margin-bottom: 2px; }
+
+/* ---------- folha ---------- */
+.folha { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); overflow: hidden; }
+.folha-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--borda); flex-wrap: wrap; }
+.folha-acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.folha-acoes input[type=search] { width: 230px; padding: 8px 12px; }
+
+.grade-wrap { overflow: auto; max-height: calc(100vh - 290px); min-height: 240px; }
+
+table.grade { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.grade th, .grade td { border-right: 1px solid var(--borda); border-bottom: 1px solid var(--borda); padding: 0; white-space: nowrap; }
+.grade th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--neutro-suave); color: var(--texto-2);
+  font-size: 12px; font-weight: 600; text-align: left; padding: 9px 10px;
+}
+.grade td.ro, .grade td.num-ro { padding: 7px 10px; color: var(--texto-2); }
+.grade td.num-ro, .grade th.num { text-align: right; }
+.grade input, .grade select {
+  width: 100%; min-width: 0; border: 0; border-radius: 0; background: transparent;
+  padding: 7px 10px; font-size: 13.5px; font-variant-numeric: tabular-nums;
+}
+.grade input:focus, .grade select:focus { outline: 2px solid var(--primaria); outline-offset: -2px; background: var(--superficie); }
+.grade input.num { text-align: right; }
+.grade tr:hover td { background: color-mix(in srgb, var(--primaria-suave) 40%, transparent); }
+
+.grade tr.linha-grupo td { background: var(--primaria-suave); color: var(--primaria); font-weight: 700; padding: 7px 10px; font-size: 12.5px; letter-spacing: .02em; }
+.grade tr.total td { background: var(--neutro-suave); font-weight: 700; padding: 9px 10px; }
+.grade tr.pago td { color: var(--texto-3); }
+.grade tr.pago input { color: var(--texto-3); }
+.grade tr.dup td:first-child { box-shadow: inset 3px 0 0 var(--atencao); }
+
+.col-x { width: 36px; }
+table.grade-fixa { table-layout: fixed; width: max-content; min-width: 100%; }
+.grade-fixa td { overflow: hidden; text-overflow: ellipsis; }
+.td-sit { display: flex; align-items: center; }
+.td-sit select { width: 108px; flex: none; }
+.td-sit .sit { margin: 0 6px 0 0; }
+.del { width: 100%; border: 0; background: none; color: var(--texto-3); cursor: pointer; font-size: 16px; padding: 6px 0; }
+.del:hover { color: var(--alerta); }
+
+.sit { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; margin: 0 8px; }
+.sit-pago { background: var(--ok-suave); color: var(--ok); }
+.sit-hoje { background: var(--atencao-suave); color: var(--atencao); }
+.sit-venc { background: var(--alerta-suave); color: var(--alerta); }
+.sit-aberto { background: var(--primaria-suave); color: var(--primaria); }
+.grade select.sel-sit { font-weight: 600; }
+
+.vazio-folha { padding: 48px 20px; text-align: center; color: var(--texto-3); }
+.vazio-folha .btn { margin-top: 14px; }
+
+.nota-rodape { padding: 10px 14px; font-size: 13px; color: var(--texto-3); border-top: 1px solid var(--borda); }
+
+/* ---------- dados para NF ---------- */
+.dados-nf { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
+.dados-nf .linha { gap: 12px; }
+.texto-nf { background: var(--fundo); border: 1px solid var(--borda); border-radius: 8px; padding: 14px; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  .folha-acoes { width: 100%; }
+  .folha-acoes input[type=search] { width: 100%; }
+  .folha-acoes .btn { flex: 1; }
+  .grade-wrap { max-height: none; }
+  .salvo { display: none; }
+}

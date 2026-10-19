@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>GLPS · Planilha de carros</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d3fbb%27/%3E%3Cpath d=%27M8 10h2v12H8zm4 0h1v12h-1zm3 0h3v12h-3zm5 0h1v12h-1zm3 0h2v12h-2z%27 fill=%27%23fff%27/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app.css?v=8" />
+  <link rel="stylesheet" href="planilha.css?v=8" />
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-esq">
+      <div class="marca"><span class="marca-sigla">GLPS</span></div>
+      <nav class="abas-site">
+        <a href="/">Cobranças</a>
+        <a href="/planilha" class="ativa">Planilha de carros</a>
+      </nav>
+    </div>
+    <div class="topo-acoes">
+      <span class="salvo" id="salvo"></span>
+      <button class="btn btn-fantasma" id="btn-sair">Sair</button>
+    </div>
+  </header>
+
+  <main class="conteudo conteudo-largo">
+    <div class="aviso-banco" id="aviso-banco" hidden>
+      <strong>A planilha está salva só neste navegador.</strong>
+      Para ela ficar guardada no servidor e aparecer em qualquer aparelho, conecte o banco de dados na Vercel
+      (Storage → Upstash for Redis → conectar ao projeto) e faça o Redeploy.
+    </div>
+
+    <section class="resumo" aria-label="Resumo">
+      <article class="kpi">
+        <span class="kpi-rotulo">Total dos serviços</span>
+        <strong class="kpi-valor" id="k-total">—</strong>
+        <span class="kpi-qtd" id="k-total-qtd"></span>
+      </article>
+      <article class="kpi kpi-alerta">
+        <span class="kpi-rotulo">A receber</span>
+        <strong class="kpi-valor" id="k-receber">—</strong>
+        <span class="kpi-qtd" id="k-receber-info"></span>
+      </article>
+      <article class="kpi kpi-ok">
+        <span class="kpi-rotulo">Já recebido (notas pagas)</span>
+        <strong class="kpi-valor" id="k-pago">—</strong>
+        <span class="kpi-qtd" id="k-pago-qtd"></span>
+      </article>
+    </section>
+
+    <section class="folha">
+      <div class="folha-topo">
+        <div class="filtros" role="tablist" id="abas">
+          <button class="filtro ativo" data-aba="carros">Carros e notas</button>
+          <button class="filtro" data-aba="vencimentos">Vencimentos</button>
+          <button class="filtro" data-aba="recebimentos">Recebimentos</button>
+          <button class="filtro" data-aba="dados">Dados para NF</button>
+        </div>
+        <div class="folha-acoes">
+          <input type="search" id="busca" placeholder="Buscar nota, placa, carro…" />
+          <button class="btn btn-primario" id="btn-linha">+ Linha</button>
+          <button class="btn btn-fantasma" id="btn-importar">Importar .xlsx</button>
+          <button class="btn btn-fantasma" id="btn-exportar">Baixar .xlsx</button>
+          <input type="file" id="arquivo" accept=".xlsx,.xls" hidden />
+        </div>
+      </div>
+      <div class="grade-wrap" id="grade"></div>
+    </section>
+  </main>
+
+  <div class="aviso" id="aviso" role="status" hidden></div>
+  <script src="planilha.js?v=8"></script>
+</body>
+</html>

@@ -31,7 +31,8 @@ createServer(async (req, res) => {
     return handler(req, res);
   }
 
-  const caminho = normalize(url.pathname === '/' ? '/index.html' : url.pathname).replace(/^(\.\.[/\\])+/, '');
+  let caminho = normalize(url.pathname === '/' ? '/index.html' : url.pathname).replace(/^(\.\.[/\\])+/, '');
+  if (!extname(caminho)) caminho += '.html'; // como o cleanUrls da Vercel
   try {
     const conteudo = await readFile(join(process.cwd(), 'public', caminho));
     res.setHeader('Content-Type', TIPOS[extname(caminho)] || 'application/octet-stream');

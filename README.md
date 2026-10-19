@@ -17,6 +17,14 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 O status de cada boleto vem direto do Asaas, então quando o cliente paga, o boleto aparece como pago no painel sem você precisar fazer nada.
 
+## Planilha de carros
+
+A aba **Planilha de carros** (`/planilha`) controla as notas emitidas para as concessionárias, os vencimentos (data da nota + prazo) e os recebimentos, como uma planilha: dá para editar direto nas células, adicionar e apagar linhas, marcar a nota como paga, importar o `.xlsx` e baixar de volta em `.xlsx`.
+
+Para os dados ficarem salvos no servidor (e aparecerem em qualquer aparelho), conecte um banco **Upstash for Redis** ao projeto na Vercel (Storage → Create → Upstash for Redis → conectar ao projeto) e faça o Redeploy. A integração cria sozinha as variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN`. Sem o banco, a planilha funciona, mas fica salva só no navegador em que foi usada.
+
+Os dados da planilha **não** ficam no código (o repositório é público): eles entram pelo botão **Importar .xlsx** e ficam no banco, protegidos pela senha do painel.
+
 ## Mudar preços dos planos
 
 Os valores ficam no começo da seção de planos em `public/app.js` (`PRODUTO`, `VALOR_CHEIO` e `PLANOS`).

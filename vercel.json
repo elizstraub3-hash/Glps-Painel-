@@ -15,12 +15,7 @@
         {
           "key": "Referrer-Policy",
           "value": "no-referrer"
-        }
-      ]
-    },
-    {
-      "source": "/(index.html|app.js|app.css)?",
-      "headers": [
+        },
         {
           "key": "Cache-Control",
           "value": "no-cache"
