@@ -218,6 +218,16 @@ details.grupo[open] { gap: 12px; }
 .cliente-novo { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px dashed var(--borda); border-radius: 8px; }
 .acoes-inline { display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ---------- vitrine de planos (tela inicial) ---------- */
+.vitrine { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px 20px 20px; }
+.vitrine-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.vitrine-topo h2 { margin: 0; font-size: 16px; }
+.planos-vitrine { grid-template-columns: 1.25fr 1fr; }
+.planos-vitrine .plano { padding-bottom: 16px; }
+.planos-vitrine .plano-preco { font-size: 30px; }
+.plano-cta { margin-top: 12px; align-self: flex-start; font-size: 14px; font-weight: 600; color: var(--primaria); }
+.plano-destaque .plano-cta { background: var(--primaria); color: #fff; padding: 8px 14px; border-radius: 8px; }
+
 /* ---------- planos ---------- */
 .planos { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }
 .plano {

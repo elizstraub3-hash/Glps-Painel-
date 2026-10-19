@@ -281,7 +281,9 @@ const PLANOS = {
 const parcelaMensal = Math.round(VALOR_CHEIO / 12 * 100) / 100;
 const economiaAnual = VALOR_CHEIO - PLANOS.anual.valor;
 
-$('#planos').innerHTML = `
+function cartoesPlanos(comCta) {
+  const cta = t => comCta ? `<span class="plano-cta">${t}</span>` : '';
+  return `
   <button type="button" class="plano plano-destaque" role="radio" data-plano="anual">
     <span class="plano-selo">Mais vantajoso · 50% off</span>
     <span class="plano-nome">Anual</span>
@@ -289,20 +291,25 @@ $('#planos').innerHTML = `
     <span class="plano-preco">${moeda(PLANOS.anual.valor)}</span>
     <span class="plano-info">pagamento único · só ${moeda(PLANOS.anual.valor / 12)}/mês</span>
     <span class="plano-economia">Economia de ${moeda(economiaAnual)}</span>
+    ${cta('Emitir boleto anual')}
   </button>
   <button type="button" class="plano" role="radio" data-plano="mensal">
     <span class="plano-nome">Mensal</span>
     <span class="plano-preco">12x ${moeda(parcelaMensal)}</span>
     <span class="plano-info">total de ${moeda(VALOR_CHEIO)} no ano</span>
-  </button>
-  <button type="button" class="plano plano-avulso" role="radio" data-plano="">Outro valor (avulso)</button>`;
+    ${cta('Emitir 12 boletos')}
+  </button>`;
+}
+$('#planos').innerHTML = cartoesPlanos(false) +
+  '<button type="button" class="plano plano-avulso" role="radio" data-plano="">Outro valor (avulso)</button>';
+$('#planos-vitrine').innerHTML = cartoesPlanos(true);
 
 let planoAtual = '';
 let descricaoAuto = '';
 
 function escolherPlano(chave) {
   planoAtual = chave;
-  $$('.plano').forEach(b => b.setAttribute('aria-checked', String(b.dataset.plano === chave)));
+  $$('#planos .plano').forEach(b => b.setAttribute('aria-checked', String(b.dataset.plano === chave)));
   const p = PLANOS[chave];
   formNovo.valor.readOnly = !!p;
   selParcelas.disabled = !!p;
@@ -368,7 +375,7 @@ function atualizarDicaParcelas() {
 selParcelas.addEventListener('change', atualizarDicaParcelas);
 formNovo.valor.addEventListener('input', atualizarDicaParcelas);
 
-$('#btn-novo').addEventListener('click', () => {
+function abrirNovoBoleto(plano = 'anual') {
   formNovo.reset();
   descricaoAuto = '';
   $('#novo-erro').hidden = true;
@@ -376,9 +383,14 @@ $('#btn-novo').addEventListener('click', () => {
   formNovo.vencimento.min = hojeISO();
   formNovo.vencimento.value = somarDias(hojeISO(), 3);
   modoBusca();
-  escolherPlano('anual'); // o anual já vem marcado
+  escolherPlano(plano); // sem escolha explícita, o anual já vem marcado
   $('#modal-novo').showModal();
   $('#cliente-busca').focus();
+}
+$('#btn-novo').addEventListener('click', () => abrirNovoBoleto());
+$('#planos-vitrine').addEventListener('click', e => {
+  const b = e.target.closest('.plano');
+  if (b) abrirNovoBoleto(b.dataset.plano);
 });
 
 formNovo.addEventListener('submit', async e => {
