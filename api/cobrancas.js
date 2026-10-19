@@ -9,6 +9,8 @@ const STATUS = {
   dinheiro: 'RECEIVED_IN_CASH',
 };
 
+const FORMAS = ['BOLETO', 'PIX', 'CREDIT_CARD'];
+
 function dinheiro(v) {
   const n = typeof v === 'number' ? v : Number(String(v || '').replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
@@ -19,7 +21,6 @@ export default rota(['GET', 'POST'], async (req, res) => {
     const q = req.query || {};
     const lista = await asaas('/payments', {
       query: {
-        billingType: 'BOLETO',
         status: STATUS[q.status],
         customer: q.cliente,
         'dueDate[ge]': q.de,
@@ -41,12 +42,14 @@ export default rota(['GET', 'POST'], async (req, res) => {
   const valor = dinheiro(b.valor);
   const parcelas = Math.max(1, Math.min(60, Number(b.parcelas) || 1));
   const hoje = new Date().toISOString().slice(0, 10);
+  const forma = FORMAS.includes(b.forma) ? b.forma : 'BOLETO';
 
   if (!b.cliente) throw new AsaasError('Escolha o cliente.', 400);
-  if (!(valor >= 5)) throw new AsaasError('O valor mínimo de um boleto é R$ 5,00.', 400);
+  if (!(valor >= 5)) throw new AsaasError('O valor mínimo de uma cobrança é R$ 5,00.', 400);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(b.vencimento || '') || b.vencimento < hoje) {
     throw new AsaasError('Escolha um vencimento de hoje em diante.', 400);
   }
+  if (parcelas > 1 && forma === 'PIX') throw new AsaasError('Pix não pode ser parcelado. Use boleto ou cartão.', 400);
   if (parcelas > 1 && valor / parcelas < 5) throw new AsaasError('Cada parcela precisa ser de pelo menos R$ 5,00.', 400);
 
   const multa = dinheiro(b.multa);
@@ -55,7 +58,7 @@ export default rota(['GET', 'POST'], async (req, res) => {
 
   const pagamento = {
     customer: b.cliente,
-    billingType: 'BOLETO',
+    billingType: forma,
     dueDate: b.vencimento,
     description: String(b.descricao || '').slice(0, 500) || undefined,
     externalReference: String(b.referencia || '').slice(0, 100) || undefined,
@@ -65,6 +68,8 @@ export default rota(['GET', 'POST'], async (req, res) => {
       ? { value: desconto, dueDateLimitDays: 0, type: 'PERCENTAGE' } // % de desconto até o vencimento
       : undefined,
   };
+  // Multa e juros não se aplicam a cartão
+  if (forma === 'CREDIT_CARD') { delete pagamento.fine; delete pagamento.interest; }
   if (parcelas > 1) {
     pagamento.installmentCount = parcelas;
     pagamento.totalValue = valor;

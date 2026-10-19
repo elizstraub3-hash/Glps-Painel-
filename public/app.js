@@ -134,7 +134,7 @@ async function carregarResumo() {
     $('#kpi-mes').textContent = `· ${new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long' })}`;
     for (const k of ['pendente', 'vencido', 'recebido']) {
       $(`#kpi-${k}`).textContent = moeda(r[k].total);
-      $(`#kpi-${k}-qtd`).textContent = `${r[k].qtd} boleto${r[k].qtd === 1 ? '' : 's'}`;
+      $(`#kpi-${k}-qtd`).textContent = `${r[k].qtd} cobrança${r[k].qtd === 1 ? '' : 's'}`;
     }
   } catch { /* resumo é secundário; a lista mostra o erro */ }
 }
@@ -161,7 +161,7 @@ async function carregarLista(mais = false) {
     const r = await api(`cobrancas?status=${filtro}&offset=${offset}`);
     const linhas = (r.data || []).map(p => `
       <button class="item" data-id="${esc(p.id)}">
-        <span class="item-cliente"><strong>${esc(p.customerName)}</strong><span>${esc(p.description || (p.installmentNumber ? `Parcela ${p.installmentNumber}` : 'Sem descrição'))}</span></span>
+        <span class="item-cliente"><strong>${esc(p.customerName)}</strong><span>${{ PIX: 'Pix · ', CREDIT_CARD: 'Cartão · ' }[p.billingType] || ''}${esc(p.description || (p.installmentNumber ? `Parcela ${p.installmentNumber}` : 'Sem descrição'))}</span></span>
         <span class="item-venc">${dataBR(p.dueDate)}</span>
         <span class="item-valor">${moeda(p.value)}</span>
         <span class="item-status">${chip(p.status)}</span>
@@ -170,7 +170,7 @@ async function carregarLista(mais = false) {
     if (!mais) {
       tabela.innerHTML = linhas
         ? `<div class="item cabecalho"><span>Cliente</span><span>Vencimento</span><span class="item-valor">Valor</span><span class="item-status">Situação</span></div>${linhas}`
-        : '<div class="vazio">Nenhum boleto por aqui ainda.</div>';
+        : '<div class="vazio">Nenhuma cobrança por aqui ainda.</div>';
     } else {
       tabela.insertAdjacentHTML('beforeend', linhas);
     }
@@ -190,7 +190,7 @@ $('#tabela').addEventListener('click', e => {
 
 function recarregar() { carregarResumo(); carregarLista(); }
 
-// ===== novo boleto: cliente =====
+// ===== nova cobrança: cliente =====
 const formNovo = $('#form-novo');
 let clienteSelecionado = null;
 let buscaTimer;
@@ -270,13 +270,13 @@ $('#btn-salvar-cliente').addEventListener('click', async e => {
   finally { btn.disabled = false; }
 });
 
-// ===== novo boleto: planos =====
-// Preço cheio do ano; o anual sai com 50% de desconto e o mensal parcela o valor cheio em 12x
+// ===== nova cobrança: planos =====
+// Preço cheio do ano; o anual sai com 50% de desconto no Pix e o mensal parcela o valor cheio em 12x no cartão
 const PRODUTO = 'Emissão para CNPJ LTDA';
 const VALOR_CHEIO = 1070;
 const PLANOS = {
-  anual: { nome: 'Anual', valor: 535, parcelas: 1, extra: ' (desconto no Pix)' },
-  mensal: { nome: 'Mensal', valor: VALOR_CHEIO, parcelas: 12 },
+  anual: { nome: 'Anual', valor: 535, parcelas: 1, forma: 'PIX', extra: ' (Pix com desconto)' },
+  mensal: { nome: 'Mensal', valor: VALOR_CHEIO, parcelas: 12, forma: 'CREDIT_CARD', extra: ' (cartão 12x)' },
 };
 const parcelaMensal = Math.round(VALOR_CHEIO / 12 * 100) / 100;
 const economiaAnual = VALOR_CHEIO - PLANOS.anual.valor;
@@ -285,20 +285,21 @@ function cartoesPlanos(comCta) {
   const cta = t => comCta ? `<span class="plano-cta">${t}</span>` : '';
   return `
   <button type="button" class="plano plano-destaque" role="radio" data-plano="anual">
-    <span class="plano-selo">50% off no Pix</span>
+    <span class="plano-selo">Mais vantajoso · 50% off no Pix</span>
     <span class="plano-nome">Anual</span>
     <span class="plano-de">de ${moeda(VALOR_CHEIO)}</span>
     <span class="plano-preco">${moeda(PLANOS.anual.valor)}</span>
-    <span class="plano-pix">Pagamento com desconto no Pix</span>
-    <span class="plano-info">à vista · só ${moeda(PLANOS.anual.valor / 12)}/mês</span>
+    <span class="plano-pix">À vista no Pix</span>
+    <span class="plano-info">só ${moeda(PLANOS.anual.valor / 12)}/mês · cai na hora</span>
     <span class="plano-economia">Economia de ${moeda(economiaAnual)}</span>
-    ${cta('Emitir cobrança anual')}
+    ${cta('Gerar Pix do anual')}
   </button>
   <button type="button" class="plano" role="radio" data-plano="mensal">
     <span class="plano-nome">Mensal</span>
     <span class="plano-preco">12x ${moeda(parcelaMensal)}</span>
+    <span class="plano-cartao">no cartão de crédito</span>
     <span class="plano-info">total de ${moeda(VALOR_CHEIO)} no ano</span>
-    ${cta('Emitir 12 boletos')}
+    ${cta('Gerar link do cartão')}
   </button>`;
 }
 $('#planos').innerHTML = cartoesPlanos(false) +
@@ -314,9 +315,11 @@ function escolherPlano(chave) {
   const p = PLANOS[chave];
   formNovo.valor.readOnly = !!p;
   selParcelas.disabled = !!p;
+  selForma.disabled = !!p;
   if (p) {
     formNovo.valor.value = p.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     selParcelas.value = p.parcelas;
+    selForma.value = p.forma;
     // Só substitui a descrição se ela ainda for a automática (não apaga o que foi digitado)
     if (!formNovo.descricao.value || formNovo.descricao.value === descricaoAuto) {
       descricaoAuto = `${PRODUTO} · Plano ${p.nome}${p.extra || ''}`;
@@ -326,6 +329,7 @@ function escolherPlano(chave) {
     if (formNovo.descricao.value === descricaoAuto) formNovo.descricao.value = '';
     formNovo.valor.value = '';
     selParcelas.value = 1;
+    selForma.value = 'BOLETO';
     formNovo.valor.focus();
   }
   atualizarDicaParcelas();
@@ -338,11 +342,11 @@ $('#planos').addEventListener('click', e => {
 function mensagemPropostaPlanos(nome) {
   return `Olá${nome ? ', ' + nome : ''}! Seguem as opções da GLPS para ${PRODUTO}:
 
-⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)} no Pix* (50% de desconto)
-Pagamento à vista com desconto no Pix, o que dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
+⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)} à vista no Pix* (50% de desconto)
+Dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
 Você economiza ${moeda(economiaAnual)} no ano.
 
-Plano Mensal: 12x de ${moeda(parcelaMensal)}
+Plano Mensal: 12x de ${moeda(parcelaMensal)} no cartão de crédito
 Total de ${moeda(VALOR_CHEIO)} no ano.
 
 No anual você paga metade e resolve o ano inteiro de uma vez. Posso te mandar o Pix do anual?`;
@@ -357,23 +361,34 @@ function atualizarProposta() {
   link.hidden = false;
 }
 
-// ===== novo boleto: cobrança =====
+// ===== nova cobrança =====
 const selParcelas = $('#sel-parcelas');
+const selForma = $('#sel-forma');
 for (let i = 1; i <= 12; i++) selParcelas.add(new Option(i === 1 ? 'À vista' : `${i}x`, i));
 
 function atualizarDicaParcelas() {
   const n = Number(selParcelas.value);
   const valor = numero(formNovo.valor.value);
   const dica = $('#dica-parcelas');
+  const forma = selForma.value;
+  // Pix não parcela
+  selParcelas.querySelectorAll('option').forEach(o => (o.disabled = forma === 'PIX' && o.value !== '1'));
+  if (forma === 'PIX' && n > 1) selParcelas.value = 1;
   if (planoAtual === 'mensal') {
-    dica.textContent = `12 boletos de ${moeda(parcelaMensal)}, um por mês. No anual o cliente pagaria ${moeda(PLANOS.anual.valor)} e economizaria ${moeda(economiaAnual)}.`;
+    dica.textContent = `Link de pagamento no cartão em 12x de ${moeda(parcelaMensal)}. O cliente digita o cartão na página segura do Asaas. No anual pagaria ${moeda(PLANOS.anual.valor)} no Pix e economizaria ${moeda(economiaAnual)}.`;
+    dica.hidden = false;
+  } else if (planoAtual === 'anual') {
+    dica.textContent = 'Cobrança Pix: o cliente paga pelo QR Code ou copia e cola e o dinheiro cai na hora.';
     dica.hidden = false;
   } else if (n > 1 && valor > 0) {
-    dica.textContent = `${n} boletos de ${moeda(valor / n)}, um por mês a partir do vencimento escolhido.`;
+    dica.textContent = forma === 'CREDIT_CARD'
+      ? `${n}x de ${moeda(valor / n)} no cartão do cliente.`
+      : `${n} boletos de ${moeda(valor / n)}, um por mês a partir do vencimento escolhido.`;
     dica.hidden = false;
   } else dica.hidden = true;
 }
 selParcelas.addEventListener('change', atualizarDicaParcelas);
+selForma.addEventListener('change', atualizarDicaParcelas);
 formNovo.valor.addEventListener('input', atualizarDicaParcelas);
 
 function abrirNovoBoleto(plano = 'anual') {
@@ -411,6 +426,7 @@ formNovo.addEventListener('submit', async e => {
         valor: numero(formNovo.valor.value),
         vencimento: formNovo.vencimento.value,
         parcelas: formNovo.parcelas.value,
+        forma: selForma.value,
         descricao: formNovo.descricao.value,
         referencia: formNovo.referencia.value,
         multa: formNovo.multa.value,
@@ -419,11 +435,11 @@ formNovo.addEventListener('submit', async e => {
       },
     });
     $('#modal-novo').close();
-    avisar(p.installment ? 'Parcelas emitidas.' : 'Boleto emitido.');
+    avisar('Cobrança gerada.');
     recarregar();
     abrirDetalhe(p.id);
   } catch (err) { mostrarErro(erro, err); }
-  finally { btn.disabled = false; btn.textContent = 'Emitir boleto'; }
+  finally { btn.disabled = false; btn.textContent = 'Gerar cobrança'; }
 });
 
 // ===== detalhe =====
@@ -432,7 +448,7 @@ let atual = null;
 async function abrirDetalhe(id) {
   const corpo = $('#det-corpo');
   corpo.innerHTML = '<div class="carregando">Carregando…</div>';
-  $('#det-titulo').textContent = 'Boleto';
+  $('#det-titulo').textContent = 'Cobrança';
   if (!$('#modal-detalhe').open) $('#modal-detalhe').showModal();
   try {
     atual = await api('cobranca?id=' + encodeURIComponent(id));
@@ -442,11 +458,21 @@ async function abrirDetalhe(id) {
 
 function mensagemWhatsApp(p) {
   const nome = (p.cliente?.name || '').split(' ')[0];
-  let txt = `Olá${nome ? ', ' + nome : ''}! Segue o boleto`;
-  if (p.description) txt += ` referente a ${p.description}`;
-  txt += `.\n\nValor: ${moeda(p.value)}\nVencimento: ${dataBR(p.dueDate)}\n\nBoleto: ${p.bankSlipUrl}`;
-  if (p.linhaDigitavel) txt += `\n\nLinha digitável:\n${p.linhaDigitavel}`;
-  if (p.pix?.payload) txt += `\n\nSe preferir, pague por Pix (copia e cola):\n${p.pix.payload}`;
+  const oi = `Olá${nome ? ', ' + nome : ''}!`;
+  const ref = p.description ? ` referente a ${p.description}` : '';
+  let txt;
+  if (p.billingType === 'PIX') {
+    txt = `${oi} Segue o Pix${ref}.\n\nValor: ${moeda(p.value)}\nVencimento: ${dataBR(p.dueDate)}`;
+    if (p.pix?.payload) txt += `\n\nPix copia e cola:\n${p.pix.payload}`;
+    txt += `\n\nOu pague pelo link: ${p.invoiceUrl}`;
+  } else if (p.billingType === 'CREDIT_CARD') {
+    const parc = p.installmentNumber ? ' em 12x' : '';
+    txt = `${oi} Segue o link para pagamento no cartão de crédito${parc}${ref}.\n\n${p.invoiceUrl}\n\nÉ só abrir e digitar os dados do cartão. A página é segura (Asaas).`;
+  } else {
+    txt = `${oi} Segue o boleto${ref}.\n\nValor: ${moeda(p.value)}\nVencimento: ${dataBR(p.dueDate)}\n\nBoleto: ${p.bankSlipUrl}`;
+    if (p.linhaDigitavel) txt += `\n\nLinha digitável:\n${p.linhaDigitavel}`;
+    if (p.pix?.payload) txt += `\n\nSe preferir, pague por Pix (copia e cola):\n${p.pix.payload}`;
+  }
   return txt + '\n\nQualquer dúvida, estou à disposição.';
 }
 
@@ -454,7 +480,8 @@ function renderDetalhe(p) {
   const aberto = ['PENDING', 'OVERDUE'].includes(p.status);
   const tel = (p.cliente?.mobilePhone || p.cliente?.phone || '').replace(/\D/g, '');
   const zap = `https://wa.me/${tel ? '55' + tel.replace(/^55(?=\d{10,11}$)/, '') : ''}?text=${encodeURIComponent(mensagemWhatsApp(p))}`;
-  $('#det-titulo').textContent = p.installmentNumber ? `Boleto · parcela ${p.installmentNumber}` : 'Boleto';
+  const tipo = { PIX: 'Pix', CREDIT_CARD: 'Cartão de crédito' }[p.billingType] || 'Boleto';
+  $('#det-titulo').textContent = p.installmentNumber ? `${tipo} · parcela ${p.installmentNumber}` : tipo;
 
   $('#det-corpo').innerHTML = `
     <div>
@@ -484,7 +511,9 @@ function renderDetalhe(p) {
       </div>` : ''}
 
     <div class="det-acoes">
-      <a class="btn btn-primario" href="${esc(p.bankSlipUrl)}" target="_blank" rel="noopener">Abrir PDF do boleto</a>
+      ${p.bankSlipUrl
+        ? `<a class="btn btn-primario" href="${esc(p.bankSlipUrl)}" target="_blank" rel="noopener">Abrir PDF do boleto</a>`
+        : `<a class="btn btn-primario" href="${esc(p.invoiceUrl)}" target="_blank" rel="noopener">Abrir página de pagamento</a>`}
       ${aberto ? `<a class="btn btn-secundario" href="${esc(zap)}" target="_blank" rel="noopener">Enviar no WhatsApp</a>` : ''}
       <button class="btn btn-fantasma" data-copiar="link">Copiar link</button>
     </div>
@@ -492,7 +521,7 @@ function renderDetalhe(p) {
     ${aberto ? `
       <div class="det-perigo">
         <button class="btn btn-fantasma" id="btn-baixa">Marcar como pago</button>
-        <button class="btn btn-perigo" id="btn-cancelar">Cancelar boleto</button>
+        <button class="btn btn-perigo" id="btn-cancelar">Cancelar cobrança</button>
       </div>` : ''}
   `;
 }
@@ -517,12 +546,12 @@ $('#det-corpo').addEventListener('click', async e => {
   }
 
   if (e.target.id === 'btn-cancelar') {
-    if (!confirm(`Cancelar o boleto de ${moeda(atual.value)} de ${atual.cliente?.name || 'cliente'}? O cliente não conseguirá mais pagá-lo.`)) return;
+    if (!confirm(`Cancelar a cobrança de ${moeda(atual.value)} de ${atual.cliente?.name || 'cliente'}? O cliente não conseguirá mais pagá-lo.`)) return;
     e.target.disabled = true;
     try {
       await api('cobranca?id=' + encodeURIComponent(atual.id), { method: 'DELETE' });
       $('#modal-detalhe').close();
-      avisar('Boleto cancelado.');
+      avisar('Cobrança cancelada.');
       recarregar();
     } catch (err) { avisar(err.message); e.target.disabled = false; }
   }

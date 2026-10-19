@@ -4,7 +4,8 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 ## O que o painel faz
 
-- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista, 50% off) e Mensal (12x de R$ 89,17). O anual já vem marcado
+- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista no Pix, 50% off) e Mensal (12x de R$ 89,17 no cartão de crédito). O anual já vem marcado
+- Cobranças por boleto (com Pix junto), Pix ou cartão de crédito
 - Envia a comparação dos planos pelo WhatsApp, puxando o cliente para o anual
 - Emite boletos avulsos à vista ou parcelados (até 12x), com multa, juros e desconto
 - Busca e cadastra clientes (CPF ou CNPJ), sem cadastrar o mesmo cliente duas vezes
@@ -23,7 +24,7 @@ Os valores ficam no começo da seção de planos em `public/app.js` (`PRODUTO`, 
 ## Como colocar no ar (Vercel)
 
 1. Crie a conta no [Asaas](https://www.asaas.com) com o CNPJ da GLPS e aguarde a aprovação.
-2. No Asaas, vá em **Minha Conta → Integrações → Chave de API** e gere uma chave.
+2. No Asaas, cadastre uma **chave Pix** (necessária para cobranças Pix) e vá em **Minha Conta → Integrações → Chave de API** e gere uma chave.
 3. Na Vercel, clique em **Add New → Project** e importe este repositório (`Glps-Painel-`). Não precisa mudar nenhuma configuração de build.
 4. Em **Settings → Environment Variables**, cadastre:
 

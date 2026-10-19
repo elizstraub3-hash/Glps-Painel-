@@ -11,7 +11,7 @@ export default rota(['GET'], async (req, res) => {
     let offset = 0, total = 0, qtd = 0;
     for (;;) {
       const r = await asaas('/payments', {
-        query: { billingType: 'BOLETO', status, 'dueDate[ge]': de, 'dueDate[le]': ate, limit: 100, offset },
+        query: { status, 'dueDate[ge]': de, 'dueDate[le]': ate, limit: 100, offset },
       });
       for (const p of r.data || []) { total += p.value; qtd++; }
       if (!r.hasMore) break;

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d3fbb%27/%3E%3Cpath d=%27M8 10h2v12H8zm4 0h1v12h-1zm3 0h3v12h-3zm5 0h1v12h-1zm3 0h2v12h-2z%27 fill=%27%23fff%27/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="app.css?v=5" />
+  <link rel="stylesheet" href="app.css?v=6" />
 </head>
 <body>
 
@@ -58,7 +58,7 @@
       <section class="vitrine" aria-label="Planos">
         <div class="vitrine-topo">
           <h2>Planos · Emissão para CNPJ LTDA</h2>
-          <span class="dica">Clique em um plano para emitir o boleto</span>
+          <span class="dica">Clique em um plano para gerar a cobrança</span>
         </div>
         <div class="planos planos-vitrine" id="planos-vitrine"></div>
       </section>
@@ -71,7 +71,7 @@
             <button class="filtro" data-status="vencido">Vencidos</button>
             <button class="filtro" data-status="recebido">Recebidos</button>
           </div>
-          <button class="btn btn-primario" id="btn-novo">+ Novo boleto</button>
+          <button class="btn btn-primario" id="btn-novo">+ Nova cobrança</button>
         </div>
 
         <div class="tabela" id="tabela" aria-live="polite"></div>
@@ -80,11 +80,11 @@
     </main>
   </div>
 
-  <!-- NOVO BOLETO -->
+  <!-- NOVA COBRANÇA -->
   <dialog class="modal" id="modal-novo">
     <form id="form-novo" method="dialog">
       <header class="modal-topo">
-        <h2>Novo boleto</h2>
+        <h2>Nova cobrança</h2>
         <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
       </header>
 
@@ -127,12 +127,19 @@
             <label class="campo"><span>Vencimento *</span><input name="vencimento" type="date" required /></label>
           </div>
           <div class="linha">
+            <label class="campo"><span>Forma de pagamento</span>
+              <select name="forma" id="sel-forma">
+                <option value="BOLETO">Boleto (com Pix junto)</option>
+                <option value="PIX">Pix</option>
+                <option value="CREDIT_CARD">Cartão de crédito</option>
+              </select>
+            </label>
             <label class="campo"><span>Parcelas</span>
               <select name="parcelas" id="sel-parcelas"></select>
             </label>
-            <label class="campo"><span>Nº do pedido / OS</span><input name="referencia" maxlength="100" /></label>
           </div>
-          <label class="campo"><span>Descrição (aparece no boleto)</span>
+          <label class="campo"><span>Nº do pedido / OS</span><input name="referencia" maxlength="100" /></label>
+          <label class="campo"><span>Descrição (aparece para o cliente)</span>
             <textarea name="descricao" rows="2" maxlength="500" placeholder="Ex.: 1.000 cartões de visita 4x4, couché 300g"></textarea>
           </label>
           <p class="dica" id="dica-parcelas" hidden></p>
@@ -153,7 +160,7 @@
 
       <footer class="modal-rodape">
         <button type="button" class="btn btn-fantasma" data-fechar>Cancelar</button>
-        <button type="submit" class="btn btn-primario" id="btn-emitir">Emitir boleto</button>
+        <button type="submit" class="btn btn-primario" id="btn-emitir">Gerar cobrança</button>
       </footer>
     </form>
   </dialog>
@@ -177,7 +184,7 @@
         <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
       </header>
       <div class="modal-corpo">
-        <p class="dica">Use quando o cliente pagou por fora do boleto (dinheiro, cartão ou Pix direto). O boleto deixa de valer.</p>
+        <p class="dica">Use quando o cliente pagou por fora (dinheiro ou Pix direto na conta). A cobrança deixa de valer.</p>
         <div class="linha">
           <label class="campo"><span>Data do pagamento</span><input name="data" type="date" required /></label>
           <label class="campo"><span>Valor recebido (R$)</span><input name="valor" inputmode="decimal" data-mascara="moeda" required /></label>
@@ -193,6 +200,6 @@
 
   <div class="aviso" id="aviso" role="status" hidden></div>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

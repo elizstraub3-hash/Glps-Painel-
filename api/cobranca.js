@@ -2,8 +2,8 @@ import { asaas, AsaasError } from '../lib/asaas.js';
 import { rota, enviar, corpo } from '../lib/http.js';
 
 // GET ?id=   detalhes + linha digitável + Pix
-// POST ?id=  { acao: 'receber', data, valor }  baixa manual (pago em dinheiro/fora do boleto)
-// DELETE ?id= cancela o boleto
+// POST ?id=  { acao: 'receber', data, valor }  baixa manual (pago em dinheiro/fora da cobrança)
+// DELETE ?id= cancela a cobrança
 export default rota(['GET', 'POST', 'DELETE'], async (req, res) => {
   const id = String(req.query?.id || '');
   if (!/^pay_\w+$/.test(id)) throw new AsaasError('Cobrança inválida.', 400);
@@ -27,10 +27,11 @@ export default rota(['GET', 'POST', 'DELETE'], async (req, res) => {
 
   const pagamento = await asaas(`/payments/${id}`);
   const aberto = ['PENDING', 'OVERDUE'].includes(pagamento.status);
+  const tipo = pagamento.billingType;
   const [cliente, linha, pix] = await Promise.all([
     asaas(`/customers/${pagamento.customer}`).catch(() => null),
-    aberto ? asaas(`/payments/${id}/identificationField`).catch(() => null) : null,
-    aberto ? asaas(`/payments/${id}/pixQrCode`).catch(() => null) : null,
+    aberto && tipo === 'BOLETO' ? asaas(`/payments/${id}/identificationField`).catch(() => null) : null,
+    aberto && tipo !== 'CREDIT_CARD' ? asaas(`/payments/${id}/pixQrCode`).catch(() => null) : null,
   ]);
   enviar(res, 200, { ...pagamento, cliente, linhaDigitavel: linha?.identificationField || null, pix });
 });
