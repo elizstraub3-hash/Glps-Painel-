@@ -275,7 +275,7 @@ $('#btn-salvar-cliente').addEventListener('click', async e => {
 const PRODUTO = 'Emissão para CNPJ LTDA';
 const VALOR_CHEIO = 1070;
 const PLANOS = {
-  anual: { nome: 'Anual', valor: 535, parcelas: 1 },
+  anual: { nome: 'Anual', valor: 535, parcelas: 1, extra: ' (desconto no Pix)' },
   mensal: { nome: 'Mensal', valor: VALOR_CHEIO, parcelas: 12 },
 };
 const parcelaMensal = Math.round(VALOR_CHEIO / 12 * 100) / 100;
@@ -285,13 +285,14 @@ function cartoesPlanos(comCta) {
   const cta = t => comCta ? `<span class="plano-cta">${t}</span>` : '';
   return `
   <button type="button" class="plano plano-destaque" role="radio" data-plano="anual">
-    <span class="plano-selo">Mais vantajoso · 50% off</span>
+    <span class="plano-selo">50% off no Pix</span>
     <span class="plano-nome">Anual</span>
     <span class="plano-de">de ${moeda(VALOR_CHEIO)}</span>
     <span class="plano-preco">${moeda(PLANOS.anual.valor)}</span>
-    <span class="plano-info">pagamento único · só ${moeda(PLANOS.anual.valor / 12)}/mês</span>
+    <span class="plano-pix">Pagamento com desconto no Pix</span>
+    <span class="plano-info">à vista · só ${moeda(PLANOS.anual.valor / 12)}/mês</span>
     <span class="plano-economia">Economia de ${moeda(economiaAnual)}</span>
-    ${cta('Emitir boleto anual')}
+    ${cta('Emitir cobrança anual')}
   </button>
   <button type="button" class="plano" role="radio" data-plano="mensal">
     <span class="plano-nome">Mensal</span>
@@ -318,7 +319,7 @@ function escolherPlano(chave) {
     selParcelas.value = p.parcelas;
     // Só substitui a descrição se ela ainda for a automática (não apaga o que foi digitado)
     if (!formNovo.descricao.value || formNovo.descricao.value === descricaoAuto) {
-      descricaoAuto = `${PRODUTO} · Plano ${p.nome}`;
+      descricaoAuto = `${PRODUTO} · Plano ${p.nome}${p.extra || ''}`;
       formNovo.descricao.value = descricaoAuto;
     }
   } else {
@@ -337,14 +338,14 @@ $('#planos').addEventListener('click', e => {
 function mensagemPropostaPlanos(nome) {
   return `Olá${nome ? ', ' + nome : ''}! Seguem as opções da GLPS para ${PRODUTO}:
 
-⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)}* (50% de desconto)
-Pagamento único, o que dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
+⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)} no Pix* (50% de desconto)
+Pagamento à vista com desconto no Pix, o que dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
 Você economiza ${moeda(economiaAnual)} no ano.
 
 Plano Mensal: 12x de ${moeda(parcelaMensal)}
 Total de ${moeda(VALOR_CHEIO)} no ano.
 
-No anual você paga metade e resolve o ano inteiro de uma vez. Posso emitir o boleto do anual para você?`;
+No anual você paga metade e resolve o ano inteiro de uma vez. Posso te mandar o Pix do anual?`;
 }
 
 function atualizarProposta() {

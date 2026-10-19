@@ -253,6 +253,7 @@ details.grupo[open] { gap: 12px; }
 .plano-preco { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1.2; }
 .plano-destaque .plano-preco { color: var(--primaria); }
 .plano-info { font-size: 13px; color: var(--texto-2); }
+.plano-pix { margin-top: 2px; font-size: 14px; font-weight: 700; color: var(--ok); }
 .plano-economia { margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--ok); }
 .plano-avulso { grid-column: 1 / -1; flex-direction: row; justify-content: center; padding: 9px; font-size: 14px; font-weight: 500; color: var(--texto-2); }
 .link-proposta { align-self: flex-start; text-decoration: none; }
