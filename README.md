@@ -26,7 +26,7 @@ O status de cada boleto vem direto do Asaas, então quando o cliente paga, o bol
    | `ASAAS_API_KEY` | a chave gerada no passo 2 |
    | `ASAAS_AMBIENTE` | `sandbox` para testar, `producao` para valer |
    | `PAINEL_SENHA` | a senha para entrar no painel |
-   | `SESSION_SECRET` | um texto aleatório longo (ex.: `openssl rand -hex 32`) |
+   | `SESSION_SECRET` | opcional: um texto aleatório longo (ex.: `openssl rand -hex 32`) |
 
 5. Faça o deploy.
 
