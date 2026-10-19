@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>GLPS · Cobranças</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d3fbb%27/%3E%3Cpath d=%27M8 10h2v12H8zm4 0h1v12h-1zm3 0h3v12h-3zm5 0h1v12h-1zm3 0h2v12h-2z%27 fill=%27%23fff%27/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <main class="login" id="tela-login" hidden>
+    <form class="login-card" id="form-login">
+      <div class="marca"><span class="marca-sigla">GLPS</span><span class="marca-sub">Cobranças</span></div>
+      <label class="campo">
+        <span>Senha</span>
+        <input type="password" name="senha" autocomplete="current-password" required autofocus />
+      </label>
+      <p class="erro" id="login-erro" hidden></p>
+      <button class="btn btn-primario btn-bloco" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <!-- PAINEL -->
+  <div id="tela-painel" hidden>
+    <header class="topo">
+      <div class="marca"><span class="marca-sigla">GLPS</span><span class="marca-sub">Cobranças</span></div>
+      <div class="topo-acoes">
+        <span class="ambiente" id="ambiente" hidden>Sandbox</span>
+        <button class="btn btn-fantasma" id="btn-sair">Sair</button>
+      </div>
+    </header>
+
+    <main class="conteudo">
+      <section class="resumo" aria-label="Resumo do mês">
+        <article class="kpi">
+          <span class="kpi-rotulo">A receber <small id="kpi-mes"></small></span>
+          <strong class="kpi-valor" id="kpi-pendente">—</strong>
+          <span class="kpi-qtd" id="kpi-pendente-qtd"></span>
+        </article>
+        <article class="kpi kpi-alerta">
+          <span class="kpi-rotulo">Vencidos</span>
+          <strong class="kpi-valor" id="kpi-vencido">—</strong>
+          <span class="kpi-qtd" id="kpi-vencido-qtd"></span>
+        </article>
+        <article class="kpi kpi-ok">
+          <span class="kpi-rotulo">Recebidos</span>
+          <strong class="kpi-valor" id="kpi-recebido">—</strong>
+          <span class="kpi-qtd" id="kpi-recebido-qtd"></span>
+        </article>
+      </section>
+
+      <section class="lista">
+        <div class="lista-topo">
+          <div class="filtros" role="tablist" id="filtros">
+            <button class="filtro ativo" data-status="">Todos</button>
+            <button class="filtro" data-status="pendente">Pendentes</button>
+            <button class="filtro" data-status="vencido">Vencidos</button>
+            <button class="filtro" data-status="recebido">Recebidos</button>
+          </div>
+          <button class="btn btn-primario" id="btn-novo">+ Novo boleto</button>
+        </div>
+
+        <div class="tabela" id="tabela" aria-live="polite"></div>
+        <button class="btn btn-fantasma btn-mais" id="btn-mais" hidden>Carregar mais</button>
+      </section>
+    </main>
+  </div>
+
+  <!-- NOVO BOLETO -->
+  <dialog class="modal" id="modal-novo">
+    <form id="form-novo" method="dialog">
+      <header class="modal-topo">
+        <h2>Novo boleto</h2>
+        <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
+      </header>
+
+      <div class="modal-corpo">
+        <fieldset class="grupo">
+          <legend>Cliente</legend>
+          <div id="cliente-escolhido" class="cliente-escolhido" hidden>
+            <div><strong id="cliente-nome"></strong><span id="cliente-doc"></span></div>
+            <button type="button" class="link" id="btn-trocar-cliente">Trocar</button>
+          </div>
+          <div id="cliente-busca-area">
+            <input type="search" id="cliente-busca" placeholder="Buscar por nome, CPF ou CNPJ" autocomplete="off" />
+            <ul class="sugestoes" id="sugestoes"></ul>
+            <button type="button" class="link" id="btn-cadastrar-cliente">+ Cadastrar cliente novo</button>
+          </div>
+          <div id="cliente-novo" class="cliente-novo" hidden>
+            <label class="campo"><span>Nome / Razão social *</span><input name="c_nome" /></label>
+            <div class="linha">
+              <label class="campo"><span>CPF ou CNPJ *</span><input name="c_doc" inputmode="numeric" data-mascara="doc" /></label>
+              <label class="campo"><span>WhatsApp</span><input name="c_tel" inputmode="tel" data-mascara="tel" /></label>
+            </div>
+            <label class="campo"><span>E-mail</span><input name="c_email" type="email" /></label>
+            <div class="linha">
+              <label class="campo"><span>CEP</span><input name="c_cep" inputmode="numeric" data-mascara="cep" /></label>
+              <label class="campo"><span>Número</span><input name="c_num" /></label>
+            </div>
+            <div class="acoes-inline">
+              <button type="button" class="btn btn-fantasma" id="btn-cancelar-cliente">Voltar à busca</button>
+              <button type="button" class="btn btn-secundario" id="btn-salvar-cliente">Salvar cliente</button>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="grupo">
+          <legend>Cobrança</legend>
+          <div class="linha">
+            <label class="campo"><span>Valor total (R$) *</span><input name="valor" inputmode="decimal" data-mascara="moeda" placeholder="0,00" required /></label>
+            <label class="campo"><span>Vencimento *</span><input name="vencimento" type="date" required /></label>
+          </div>
+          <div class="linha">
+            <label class="campo"><span>Parcelas</span>
+              <select name="parcelas" id="sel-parcelas"></select>
+            </label>
+            <label class="campo"><span>Nº do pedido / OS</span><input name="referencia" maxlength="100" /></label>
+          </div>
+          <label class="campo"><span>Descrição (aparece no boleto)</span>
+            <textarea name="descricao" rows="2" maxlength="500" placeholder="Ex.: 1.000 cartões de visita 4x4, couché 300g"></textarea>
+          </label>
+          <p class="dica" id="dica-parcelas" hidden></p>
+        </fieldset>
+
+        <details class="grupo">
+          <summary>Multa, juros e desconto</summary>
+          <div class="linha linha-3">
+            <label class="campo"><span>Multa (%)</span><input name="multa" inputmode="decimal" value="2" /></label>
+            <label class="campo"><span>Juros ao mês (%)</span><input name="juros" inputmode="decimal" value="1" /></label>
+            <label class="campo"><span>Desconto até o venc. (%)</span><input name="desconto" inputmode="decimal" value="0" /></label>
+          </div>
+          <p class="dica">Por lei, a multa por atraso é limitada a 2% e os juros a 1% ao mês.</p>
+        </details>
+
+        <p class="erro" id="novo-erro" hidden></p>
+      </div>
+
+      <footer class="modal-rodape">
+        <button type="button" class="btn btn-fantasma" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primario" id="btn-emitir">Emitir boleto</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- DETALHE -->
+  <dialog class="modal" id="modal-detalhe">
+    <div>
+      <header class="modal-topo">
+        <h2 id="det-titulo">Boleto</h2>
+        <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
+      </header>
+      <div class="modal-corpo" id="det-corpo"></div>
+    </div>
+  </dialog>
+
+  <!-- BAIXA MANUAL -->
+  <dialog class="modal modal-pequeno" id="modal-baixa">
+    <form id="form-baixa" method="dialog">
+      <header class="modal-topo">
+        <h2>Marcar como pago</h2>
+        <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
+      </header>
+      <div class="modal-corpo">
+        <p class="dica">Use quando o cliente pagou por fora do boleto (dinheiro, cartão ou Pix direto). O boleto deixa de valer.</p>
+        <div class="linha">
+          <label class="campo"><span>Data do pagamento</span><input name="data" type="date" required /></label>
+          <label class="campo"><span>Valor recebido (R$)</span><input name="valor" inputmode="decimal" data-mascara="moeda" required /></label>
+        </div>
+        <p class="erro" id="baixa-erro" hidden></p>
+      </div>
+      <footer class="modal-rodape">
+        <button type="button" class="btn btn-fantasma" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primario">Confirmar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div class="aviso" id="aviso" role="status" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

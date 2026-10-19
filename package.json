@@ -1,0 +1,12 @@
+{
+  "name": "painel-boletos",
+  "private": true,
+  "type": "module",
+  "description": "Painel para emitir e acompanhar boletos via Asaas",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
