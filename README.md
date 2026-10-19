@@ -4,7 +4,9 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 ## O que o painel faz
 
-- Emite boletos à vista ou parcelados (até 12x), com multa, juros e desconto
+- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista, 50% off) e Mensal (12x de R$ 89,17). O anual já vem marcado
+- Envia a comparação dos planos pelo WhatsApp, puxando o cliente para o anual
+- Emite boletos avulsos à vista ou parcelados (até 12x), com multa, juros e desconto
 - Busca e cadastra clientes (CPF ou CNPJ), sem cadastrar o mesmo cliente duas vezes
 - Mostra a linha digitável, o Pix copia e cola, o QR Code e o PDF do boleto
 - Envia o boleto pelo WhatsApp com uma mensagem pronta
@@ -13,6 +15,10 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 - Resume o mês: quanto há a receber, quanto está vencido e quanto já foi recebido
 
 O status de cada boleto vem direto do Asaas, então quando o cliente paga, o boleto aparece como pago no painel sem você precisar fazer nada.
+
+## Mudar preços dos planos
+
+Os valores ficam no começo da seção de planos em `public/app.js` (`PRODUTO`, `VALOR_CHEIO` e `PLANOS`).
 
 ## Como colocar no ar (Vercel)
 

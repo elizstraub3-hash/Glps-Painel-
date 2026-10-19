@@ -203,10 +203,12 @@ function selecionarCliente(c) {
   $('#cliente-busca-area').hidden = true;
   $('#cliente-novo').hidden = true;
   $('#sugestoes').innerHTML = '';
+  atualizarProposta();
 }
 
 function modoBusca() {
   clienteSelecionado = null;
+  atualizarProposta();
   $('#cliente-escolhido').hidden = true;
   $('#cliente-novo').hidden = true;
   $('#cliente-busca-area').hidden = false;
@@ -268,6 +270,85 @@ $('#btn-salvar-cliente').addEventListener('click', async e => {
   finally { btn.disabled = false; }
 });
 
+// ===== novo boleto: planos =====
+// Preço cheio do ano; o anual sai com 50% de desconto e o mensal parcela o valor cheio em 12x
+const PRODUTO = 'Emissão para CNPJ LTDA';
+const VALOR_CHEIO = 1070;
+const PLANOS = {
+  anual: { nome: 'Anual', valor: 535, parcelas: 1 },
+  mensal: { nome: 'Mensal', valor: VALOR_CHEIO, parcelas: 12 },
+};
+const parcelaMensal = Math.round(VALOR_CHEIO / 12 * 100) / 100;
+const economiaAnual = VALOR_CHEIO - PLANOS.anual.valor;
+
+$('#planos').innerHTML = `
+  <button type="button" class="plano plano-destaque" role="radio" data-plano="anual">
+    <span class="plano-selo">Mais vantajoso · 50% off</span>
+    <span class="plano-nome">Anual</span>
+    <span class="plano-de">de ${moeda(VALOR_CHEIO)}</span>
+    <span class="plano-preco">${moeda(PLANOS.anual.valor)}</span>
+    <span class="plano-info">pagamento único · só ${moeda(PLANOS.anual.valor / 12)}/mês</span>
+    <span class="plano-economia">Economia de ${moeda(economiaAnual)}</span>
+  </button>
+  <button type="button" class="plano" role="radio" data-plano="mensal">
+    <span class="plano-nome">Mensal</span>
+    <span class="plano-preco">12x ${moeda(parcelaMensal)}</span>
+    <span class="plano-info">total de ${moeda(VALOR_CHEIO)} no ano</span>
+  </button>
+  <button type="button" class="plano plano-avulso" role="radio" data-plano="">Outro valor (avulso)</button>`;
+
+let planoAtual = '';
+let descricaoAuto = '';
+
+function escolherPlano(chave) {
+  planoAtual = chave;
+  $$('.plano').forEach(b => b.setAttribute('aria-checked', String(b.dataset.plano === chave)));
+  const p = PLANOS[chave];
+  formNovo.valor.readOnly = !!p;
+  selParcelas.disabled = !!p;
+  if (p) {
+    formNovo.valor.value = p.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    selParcelas.value = p.parcelas;
+    // Só substitui a descrição se ela ainda for a automática (não apaga o que foi digitado)
+    if (!formNovo.descricao.value || formNovo.descricao.value === descricaoAuto) {
+      descricaoAuto = `${PRODUTO} · Plano ${p.nome}`;
+      formNovo.descricao.value = descricaoAuto;
+    }
+  } else {
+    if (formNovo.descricao.value === descricaoAuto) formNovo.descricao.value = '';
+    formNovo.valor.value = '';
+    selParcelas.value = 1;
+    formNovo.valor.focus();
+  }
+  atualizarDicaParcelas();
+}
+$('#planos').addEventListener('click', e => {
+  const b = e.target.closest('.plano');
+  if (b) escolherPlano(b.dataset.plano);
+});
+
+function mensagemPropostaPlanos(nome) {
+  return `Olá${nome ? ', ' + nome : ''}! Seguem as opções da GLPS para ${PRODUTO}:
+
+⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)}* (50% de desconto)
+Pagamento único, o que dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
+Você economiza ${moeda(economiaAnual)} no ano.
+
+Plano Mensal: 12x de ${moeda(parcelaMensal)}
+Total de ${moeda(VALOR_CHEIO)} no ano.
+
+No anual você paga metade e resolve o ano inteiro de uma vez. Posso emitir o boleto do anual para você?`;
+}
+
+function atualizarProposta() {
+  const link = $('#btn-proposta');
+  if (!clienteSelecionado) { link.hidden = true; return; }
+  const tel = (clienteSelecionado.mobilePhone || clienteSelecionado.phone || '').replace(/\D/g, '');
+  const nome = (clienteSelecionado.name || '').split(' ')[0];
+  link.href = `https://wa.me/${tel ? '55' + tel.replace(/^55(?=\d{10,11}$)/, '') : ''}?text=${encodeURIComponent(mensagemPropostaPlanos(nome))}`;
+  link.hidden = false;
+}
+
 // ===== novo boleto: cobrança =====
 const selParcelas = $('#sel-parcelas');
 for (let i = 1; i <= 12; i++) selParcelas.add(new Option(i === 1 ? 'À vista' : `${i}x`, i));
@@ -276,7 +357,10 @@ function atualizarDicaParcelas() {
   const n = Number(selParcelas.value);
   const valor = numero(formNovo.valor.value);
   const dica = $('#dica-parcelas');
-  if (n > 1 && valor > 0) {
+  if (planoAtual === 'mensal') {
+    dica.textContent = `12 boletos de ${moeda(parcelaMensal)}, um por mês. No anual o cliente pagaria ${moeda(PLANOS.anual.valor)} e economizaria ${moeda(economiaAnual)}.`;
+    dica.hidden = false;
+  } else if (n > 1 && valor > 0) {
     dica.textContent = `${n} boletos de ${moeda(valor / n)}, um por mês a partir do vencimento escolhido.`;
     dica.hidden = false;
   } else dica.hidden = true;
@@ -286,11 +370,13 @@ formNovo.valor.addEventListener('input', atualizarDicaParcelas);
 
 $('#btn-novo').addEventListener('click', () => {
   formNovo.reset();
+  descricaoAuto = '';
   $('#novo-erro').hidden = true;
   $('#dica-parcelas').hidden = true;
   formNovo.vencimento.min = hojeISO();
   formNovo.vencimento.value = somarDias(hojeISO(), 3);
   modoBusca();
+  escolherPlano('anual'); // o anual já vem marcado
   $('#modal-novo').showModal();
   $('#cliente-busca').focus();
 });

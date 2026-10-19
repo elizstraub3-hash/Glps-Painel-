@@ -218,6 +218,36 @@ details.grupo[open] { gap: 12px; }
 .cliente-novo { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px dashed var(--borda); border-radius: 8px; }
 .acoes-inline { display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ---------- planos ---------- */
+.planos { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }
+.plano {
+  position: relative;
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left; cursor: pointer;
+  background: var(--superficie);
+  border: 1.5px solid var(--borda);
+  border-radius: 10px;
+  padding: 14px 14px 12px;
+}
+.plano:hover { border-color: var(--texto-3); }
+.plano[aria-checked="true"] { border-color: var(--primaria); box-shadow: 0 0 0 3px var(--primaria-suave); }
+.plano-destaque { background: var(--primaria-suave); border-color: var(--primaria); padding-top: 26px; }
+.plano-selo {
+  position: absolute; top: -10px; left: 12px;
+  background: var(--ok); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 99px;
+}
+.plano-nome { font-size: 13px; font-weight: 700; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
+.plano-de { font-size: 13px; color: var(--texto-3); text-decoration: line-through; }
+.plano-preco { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1.2; }
+.plano-destaque .plano-preco { color: var(--primaria); }
+.plano-info { font-size: 13px; color: var(--texto-2); }
+.plano-economia { margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--ok); }
+.plano-avulso { grid-column: 1 / -1; flex-direction: row; justify-content: center; padding: 9px; font-size: 14px; font-weight: 500; color: var(--texto-2); }
+.link-proposta { align-self: flex-start; text-decoration: none; }
+input[readonly], select:disabled { background: var(--fundo); color: var(--texto-2); }
+
 /* ---------- detalhe ---------- */
 .det-valor { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 0; }
 .det-meta { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px; margin: 0; }
@@ -260,6 +290,7 @@ details.grupo[open] { gap: 12px; }
   .item-valor { grid-column: 2; grid-row: 1; }
   .item-status { grid-column: 2; grid-row: 2; }
   .linha { flex-direction: column; }
+  .planos { grid-template-columns: 1fr; gap: 16px; }
   .modal { max-height: calc(100vh - 24px); }
   .modal-corpo { padding: 16px; }
   .pix { flex-direction: column; align-items: stretch; }
