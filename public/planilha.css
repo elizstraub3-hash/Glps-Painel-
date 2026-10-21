@@ -62,6 +62,7 @@ table.grade-fixa { table-layout: fixed; width: max-content; min-width: 100%; }
 .btn-mini:hover { border-color: var(--primaria); }
 .td-bol a { font-size: 12.5px; font-weight: 600; color: var(--primaria); text-decoration: none; }
 .td-bol .sit { margin: 0; }
+.td-bol a.cancelar-bol { color: var(--alerta); font-weight: 500; }
 
 .vazio-folha { padding: 48px 20px; text-align: center; color: var(--texto-3); }
 .vazio-folha .btn { margin-top: 14px; }

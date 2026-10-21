@@ -1,5 +1,7 @@
 # GLPS · Painel de Cobranças
 
+> **Emissor de boletos:** o painel funciona com a **Efí (ex-Gerencianet)** ou com o **Asaas**. Se `EFI_CLIENT_ID` e `EFI_CLIENT_SECRET` estiverem configurados, os boletos das notas saem pela Efí e o painel abre direto em **Notas e boletos** (a tela de Cobranças, feita para o Asaas, fica escondida).
+
 Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto sai com **Pix no mesmo documento** e pode ser enviado ao cliente pelo WhatsApp com um clique.
 
 ## O que o painel faz
@@ -16,6 +18,13 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 - Resume o mês: quanto há a receber, quanto está vencido e quanto já foi recebido
 
 O status de cada boleto vem direto do Asaas, então quando o cliente paga, o boleto aparece como pago no painel sem você precisar fazer nada.
+
+## Usar com a Efí
+
+1. Na Efí, vá em **API → Aplicações → Nova aplicação** e ative o escopo da **API de Emissões / Cobranças** (boletos). Copie o **Client ID** e o **Client Secret** de **Homologação** (testes) ou de **Produção** (boletos reais).
+2. Na Vercel, cadastre `EFI_CLIENT_ID`, `EFI_CLIENT_SECRET` e `EFI_AMBIENTE` (`homologacao` ou `producao`) e faça o Redeploy.
+
+Boletos da API de Cobranças da Efí não precisam de certificado. Os boletos saem com 2% de multa e 0,033% de juros ao dia (≈ 1% ao mês) após o vencimento.
 
 ## Notas e boletos
 

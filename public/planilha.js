@@ -213,7 +213,7 @@ const COLS_CARROS = [
   ['prazo', 'Prazo', 'int', 70],
   ['_venc', 'Vencimento', 'calc', 105],
   ['situacao', 'Situação', 'sit', 215],
-  ['_boleto', 'Boleto', 'boleto', 200],
+  ['_boleto', 'Boleto', 'boleto', 270],
   ['triagem', 'Triagem', '', 105],
   ['cnpj', 'CNPJ', '', 165],
   ['obs', 'Observação', '', 340],
@@ -238,7 +238,8 @@ function celula(tabela, item, [campo, , tipo]) {
     const [rot, cls] = STATUS_BOLETO[b.status] || [b.status || '—', 'sit-aberto'];
     return `<td><div class="td-bol"><span class="sit ${cls}">${rot}</span>
       <a href="${esc(b.bankSlipUrl || b.invoiceUrl || '#')}" target="_blank" rel="noopener">Abrir</a>
-      <a href="#" data-copiar-bol="${esc(item.id)}">Copiar link</a></div></td>`;
+      <a href="#" data-copiar-bol="${esc(item.id)}">Copiar link</a>
+      ${PAGO.includes(b.status) ? '' : `<a href="#" class="cancelar-bol" data-cancelar-bol="${esc(item.id)}">Cancelar</a>`}</div></td>`;
   }
   if (tipo === 'calc') return `<td class="ro">${dataBR(vencimento(item))}</td>`;
   if (tipo === 'sit') {
@@ -464,6 +465,18 @@ $('#grade').addEventListener('click', e => {
     const b = achar('carros', cop.dataset.copiarBol)?.boleto;
     const link = b?.invoiceUrl || b?.bankSlipUrl;
     if (link) navigator.clipboard.writeText(link).then(() => avisar('Link do boleto copiado.'), () => prompt('Copie:', link));
+    return;
+  }
+  const canc = e.target.closest('[data-cancelar-bol]');
+  if (canc) {
+    e.preventDefault();
+    const nota = achar('carros', canc.dataset.cancelarBol);
+    const b = nota?.boleto;
+    if (!b || !confirm(`Cancelar o boleto de ${moeda(b.valor)} (NF ${(b.notas || [nota.nota]).join(', ')})? A concessionária não vai mais conseguir pagar.`)) return;
+    api('boleto-notas?id=' + encodeURIComponent(b.id), { method: 'DELETE' }).then(() => {
+      dados.carros.forEach(c => { if (c.boleto?.id === b.id) delete c.boleto; });
+      marcarAlterado(); render(); avisar('Boleto cancelado.');
+    }, err => avisar(err.message));
     return;
   }
   const del = e.target.closest('[data-del]');
@@ -789,4 +802,11 @@ window.addEventListener('beforeunload', e => {
   if ($('#salvo').textContent.startsWith('Alterações') || salvando) { e.preventDefault(); e.returnValue = ''; }
 });
 
-api('sessao').then(r => (r.logado ? carregar() : (location.href = '/'))).catch(() => (location.href = '/'));
+api('sessao').then(r => {
+  if (!r.logado) return (location.href = '/');
+  // Com a Efí, a tela de Cobranças (feita para o Asaas) fica escondida
+  if (r.provedor === 'efi') $('#link-cobrancas').hidden = true;
+  $('#ambiente').textContent = r.provedor === 'efi' ? 'Efí · homologação' : 'Sandbox';
+  $('#ambiente').hidden = r.ambiente !== 'sandbox';
+  carregar();
+}).catch(() => (location.href = '/'));

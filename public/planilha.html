@@ -10,18 +10,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="app.css?v=10" />
-  <link rel="stylesheet" href="planilha.css?v=10" />
+  <link rel="stylesheet" href="planilha.css?v=11" />
 </head>
 <body>
   <header class="topo">
     <div class="topo-esq">
       <div class="marca"><span class="marca-sigla">GLPS</span></div>
       <nav class="abas-site">
-        <a href="/">Cobranças</a>
+        <a href="/" id="link-cobrancas">Cobranças</a>
         <a href="/planilha" class="ativa">Notas e boletos</a>
       </nav>
     </div>
     <div class="topo-acoes">
+      <span class="ambiente" id="ambiente" hidden></span>
       <span class="salvo" id="salvo"></span>
       <button class="btn btn-fantasma" id="btn-sair">Sair</button>
     </div>
@@ -104,6 +105,6 @@
   </dialog>
 
   <div class="aviso" id="aviso" role="status" hidden></div>
-  <script src="planilha.js?v=10"></script>
+  <script src="planilha.js?v=11"></script>
 </body>
 </html>

@@ -116,6 +116,7 @@ $('#form-login').addEventListener('submit', async e => {
   try {
     await api('sessao', { method: 'POST', body: { senha: e.target.senha.value } });
     e.target.reset();
+    if (provedor === 'efi') { location.href = '/planilha'; return; }
     mostrarPainel();
   } catch (err) { mostrarErro(erro, err); }
   finally { btn.disabled = false; }
@@ -623,9 +624,12 @@ $('#form-baixa').addEventListener('submit', async e => {
 });
 
 // ===== início =====
+let provedor = 'asaas';
 api('sessao')
   .then(r => {
+    provedor = r.provedor;
     $('#ambiente').hidden = r.ambiente !== 'sandbox';
+    if (r.logado && provedor === 'efi') return (location.href = '/planilha');
     r.logado ? mostrarPainel() : mostrarLogin();
   })
   .catch(mostrarLogin);
