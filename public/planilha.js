@@ -53,7 +53,7 @@ let aba = 'carros';
 let busca = '';
 
 function vazio() {
-  return { versao: 0, carros: [], recebimentos: [], dadosNF: { banco: '', agencia: '', conta: '', cnpj: '' } };
+  return { versao: 0, carros: [], recebimentos: [], dadosNF: { banco: '', agencia: '', conta: '', cnpj: '', email: '' } };
 }
 
 const vencimento = c => c.data ? somarDias(c.data, c.prazo ?? PRAZO_PADRAO) : '';
@@ -362,12 +362,14 @@ function textoNF() {
 
 function renderDadosNF() {
   const d = dados.dadosNF;
-  const campo = (c, rot) => `<label class="campo"><span>${rot}</span><input data-t="dadosNF" data-c="${c}" value="${esc(d[c] || '')}" /></label>`;
+  const campo = (c, rot, tipo = 'text') => `<label class="campo"><span>${rot}</span><input type="${tipo}" data-t="dadosNF" data-c="${c}" value="${esc(d[c] || '')}" /></label>`;
   $('#grade').innerHTML = `
     <div class="dados-nf">
+      <h3 class="dados-titulo">Informações da GLPS</h3>
+      <div class="linha">${campo('email', 'E-mail da empresa', 'email')}${campo('cnpj', 'CNPJ da GLPS')}</div>
+      <h3 class="dados-titulo">Dados para a nota fiscal</h3>
       <p class="dica">Pagamento previsto: hoje + ${PRAZO_PADRAO} dias corridos (${dataBR(somarDias(hojeISO(), PRAZO_PADRAO))}).</p>
-      <div class="linha">${campo('banco', 'Banco')}${campo('cnpj', 'CNPJ da GLPS')}</div>
-      <div class="linha">${campo('agencia', 'Agência')}${campo('conta', 'Conta corrente')}</div>
+      <div class="linha">${campo('banco', 'Banco')}${campo('agencia', 'Agência')}${campo('conta', 'Conta corrente')}</div>
       <div class="copiavel"><span>Texto para copiar nas notas</span>
         <div><code class="texto-nf" id="texto-nf">${esc(textoNF())}</code><button class="btn btn-secundario" id="btn-copiar-nf">Copiar</button></div>
       </div>

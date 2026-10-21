@@ -60,6 +60,7 @@ table.grade-fixa { table-layout: fixed; width: max-content; min-width: 100%; }
 /* ---------- dados para NF ---------- */
 .dados-nf { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
 .dados-nf .linha { gap: 12px; }
+.dados-titulo { margin: 4px 0 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-2); }
 .texto-nf { background: var(--fundo); border: 1px solid var(--borda); border-radius: 8px; padding: 14px; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
 
 @media (max-width: 720px) {
