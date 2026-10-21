@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>GLPS · Planilha de carros</title>
+  <title>GLPS · Notas e boletos</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231d3fbb%27/%3E%3Cpath d=%27M8 10h2v12H8zm4 0h1v12h-1zm3 0h3v12h-3zm5 0h1v12h-1zm3 0h2v12h-2z%27 fill=%27%23fff%27/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="app.css?v=8" />
-  <link rel="stylesheet" href="planilha.css?v=9" />
+  <link rel="stylesheet" href="app.css?v=10" />
+  <link rel="stylesheet" href="planilha.css?v=10" />
 </head>
 <body>
   <header class="topo">
@@ -18,7 +18,7 @@
       <div class="marca"><span class="marca-sigla">GLPS</span></div>
       <nav class="abas-site">
         <a href="/">Cobranças</a>
-        <a href="/planilha" class="ativa">Planilha de carros</a>
+        <a href="/planilha" class="ativa">Notas e boletos</a>
       </nav>
     </div>
     <div class="topo-acoes">
@@ -62,7 +62,8 @@
         </div>
         <div class="folha-acoes">
           <input type="search" id="busca" placeholder="Buscar nota, placa, carro…" />
-          <button class="btn btn-primario" id="btn-linha">+ Linha</button>
+          <button class="btn btn-primario" id="btn-boleto" hidden></button>
+          <button class="btn btn-fantasma" id="btn-linha">+ Linha</button>
           <button class="btn btn-fantasma" id="btn-importar">Importar .xlsx</button>
           <button class="btn btn-fantasma" id="btn-exportar">Baixar .xlsx</button>
           <input type="file" id="arquivo" accept=".xlsx,.xls" hidden />
@@ -72,7 +73,37 @@
     </section>
   </main>
 
+  <!-- GERAR BOLETO DAS NOTAS -->
+  <dialog class="modal" id="modal-boleto">
+    <form id="form-boleto" method="dialog">
+      <header class="modal-topo">
+        <h2>Gerar boleto</h2>
+        <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
+      </header>
+      <div class="modal-corpo">
+        <dl class="det-meta">
+          <dt>Concessionária</dt><dd id="bol-nome"></dd>
+          <dt>CNPJ</dt><dd id="bol-cnpj"></dd>
+          <dt>Notas</dt><dd id="bol-notas"></dd>
+        </dl>
+        <p class="det-valor" id="bol-total"></p>
+        <div class="linha">
+          <label class="campo"><span>Vencimento</span><input type="date" name="vencimento" required /></label>
+        </div>
+        <label class="campo"><span>Descrição (aparece no boleto)</span>
+          <textarea name="descricao" rows="3" maxlength="500"></textarea>
+        </label>
+        <p class="dica" id="bol-dica"></p>
+        <p class="erro" id="bol-erro" hidden></p>
+      </div>
+      <footer class="modal-rodape">
+        <button type="button" class="btn btn-fantasma" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primario" id="bol-gerar">Gerar boleto no Asaas</button>
+      </footer>
+    </form>
+  </dialog>
+
   <div class="aviso" id="aviso" role="status" hidden></div>
-  <script src="planilha.js?v=9"></script>
+  <script src="planilha.js?v=10"></script>
 </body>
 </html>

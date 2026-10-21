@@ -4,7 +4,7 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 ## O que o painel faz
 
-- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista no Pix, 50% off) e cartão de crédito de 1x (R$ 1.070,00) a 12x com juros de 2,99% a.m., com simulação de parcelas na tela inicial. O anual já vem marcado
+- Planos de exemplo de **Emissão para CNPJ LTDA** (escondidos; para mostrar, mude `MOSTRAR_PLANOS` para `true` em `public/app.js`): Anual (R$ 535,00 à vista no Pix, 50% off) e cartão de crédito de 1x (R$ 1.070,00) a 12x com juros de 2,99% a.m., com simulação de parcelas na tela inicial. O anual já vem marcado
 - Cobranças por boleto (com Pix junto), Pix ou cartão de crédito
 - Envia a comparação dos planos pelo WhatsApp, puxando o cliente para o anual
 - Emite boletos avulsos à vista ou parcelados (até 12x), com multa, juros e desconto
@@ -17,9 +17,11 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 O status de cada boleto vem direto do Asaas, então quando o cliente paga, o boleto aparece como pago no painel sem você precisar fazer nada.
 
-## Planilha de carros
+## Notas e boletos
 
-A aba **Planilha de carros** (`/planilha`) controla as notas emitidas para as concessionárias, os vencimentos (data da nota + prazo) e os recebimentos, como uma planilha: dá para editar direto nas células, adicionar e apagar linhas, marcar a nota como paga, importar o `.xlsx` e baixar de volta em `.xlsx`.
+A aba **Notas e boletos** (`/planilha`) controla as notas emitidas para as concessionárias, os vencimentos (data da nota + prazo) e os recebimentos, como uma planilha: dá para editar direto nas células, adicionar e apagar linhas, marcar a nota como paga, importar o `.xlsx` e baixar de volta em `.xlsx`.
+
+**Boleto a partir das notas:** clique em **Gerar boleto** na linha da nota, ou marque várias notas da mesma concessionária (mesmo CNPJ) e use o botão **Gerar boleto** do topo para juntar tudo num boleto só. O boleto é criado no Asaas com a concessionária como cliente e vencimento previsto da nota (data + prazo). Ao abrir a página, o painel consulta o Asaas: boleto pago marca a nota como **Pago**; boleto cancelado no Asaas libera a nota para gerar de novo.
 
 Para os dados ficarem salvos no servidor (e aparecerem em qualquer aparelho), conecte um banco **Upstash for Redis** ao projeto na Vercel (Storage → Create → Upstash for Redis → conectar ao projeto) e faça o Redeploy. A integração cria sozinha as variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN`. Sem o banco, a planilha funciona, mas fica salva só no navegador em que foi usada.
 

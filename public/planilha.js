@@ -51,6 +51,7 @@ let dados = vazio();
 let semBanco = false;
 let aba = 'carros';
 let busca = '';
+const selecionadas = new Set(); // notas marcadas para gerar boleto (não é salvo)
 
 function vazio() {
   return { versao: 0, carros: [], recebimentos: [], dadosNF: { banco: '', agencia: '', conta: '', cnpj: '', email: '' } };
@@ -149,6 +150,7 @@ async function carregar() {
     return;
   }
   render();
+  sincronizarBoletos();
 }
 
 // ===== resumo =====
@@ -175,6 +177,7 @@ function renderResumo() {
 function render() {
   renderResumo();
   $('#btn-linha').hidden = !['carros', 'recebimentos'].includes(aba);
+  if (aba !== 'carros') $('#btn-boleto').hidden = true;
   $('#busca').hidden = aba === 'dados';
   if (aba === 'carros') renderCarros();
   if (aba === 'vencimentos') renderVencimentos();
@@ -200,6 +203,7 @@ function bate(obj) {
 // ===== aba: carros =====
 // [campo, título, tipo, largura em px]
 const COLS_CARROS = [
+  ['_sel', '', 'sel', 36],
   ['nota', 'Nota', 'num-txt', 70],
   ['concessionaria', 'Concessionária', '', 210],
   ['carro', 'Carro', '', 160],
@@ -209,14 +213,33 @@ const COLS_CARROS = [
   ['prazo', 'Prazo', 'int', 70],
   ['_venc', 'Vencimento', 'calc', 105],
   ['situacao', 'Situação', 'sit', 215],
+  ['_boleto', 'Boleto', 'boleto', 200],
   ['triagem', 'Triagem', '', 105],
   ['cnpj', 'CNPJ', '', 165],
   ['obs', 'Observação', '', 340],
 ];
 const colgroup = cols => `<colgroup>${cols.map(c => `<col style="width:${c[3]}px" />`).join('')}<col style="width:36px" /></colgroup>`;
 
+const STATUS_BOLETO = {
+  PENDING: ['Aguardando', 'sit-aberto'],
+  OVERDUE: ['Vencido', 'sit-venc'],
+  RECEIVED: ['Pago', 'sit-pago'],
+  CONFIRMED: ['Pago', 'sit-pago'],
+  RECEIVED_IN_CASH: ['Pago', 'sit-pago'],
+};
+const PAGO = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'];
+
 function celula(tabela, item, [campo, , tipo]) {
   const attrs = `data-t="${tabela}" data-id="${esc(item.id)}" data-c="${campo}"`;
+  if (tipo === 'sel') return `<td class="col-sel"><input type="checkbox" class="sel-nota" data-id="${esc(item.id)}" ${selecionadas.has(item.id) ? 'checked' : ''} aria-label="Selecionar nota ${esc(item.nota)}" /></td>`;
+  if (tipo === 'boleto') {
+    const b = item.boleto;
+    if (!b) return `<td><div class="td-bol"><button class="btn-mini" data-gerar="${esc(item.id)}">Gerar boleto</button></div></td>`;
+    const [rot, cls] = STATUS_BOLETO[b.status] || [b.status || '—', 'sit-aberto'];
+    return `<td><div class="td-bol"><span class="sit ${cls}">${rot}</span>
+      <a href="${esc(b.bankSlipUrl || b.invoiceUrl || '#')}" target="_blank" rel="noopener">Abrir</a>
+      <a href="#" data-copiar-bol="${esc(item.id)}">Copiar link</a></div></td>`;
+  }
   if (tipo === 'calc') return `<td class="ro">${dataBR(vencimento(item))}</td>`;
   if (tipo === 'sit') {
     const [rotulo, cls] = situacao(item);
@@ -249,7 +272,7 @@ function renderCarros() {
     const soma = itens.reduce((s, c) => s + (Number(c.valor) || 0), 0);
     linhas += `<tr class="linha-grupo"><td colspan="${COLS_CARROS.length + 1}">${data ? 'NOTAS DO DIA ' + dataBR(data) : 'SEM DATA'} · ${itens.length} nota${itens.length === 1 ? '' : 's'} · ${moeda(soma)}</td></tr>`;
     for (const c of itens) {
-      const cls = [c.situacao === 'Pago' ? 'pago' : '', dup.has(c.id) ? 'dup' : ''].join(' ');
+      const cls = [c.situacao === 'Pago' ? 'pago' : '', dup.has(c.id) ? 'dup' : '', selecionadas.has(c.id) ? 'selecionada' : ''].join(' ');
       linhas += `<tr class="${cls}" ${dup.has(c.id) ? 'title="Possível duplicidade: mesma placa e mesmo valor de outra nota"' : ''}>
         ${COLS_CARROS.map(col => celula('carros', c, col)).join('')}
         <td class="col-x"><button class="del" data-del="carros" data-id="${esc(c.id)}" title="Apagar linha">×</button></td>
@@ -257,7 +280,8 @@ function renderCarros() {
     }
   }
   const total = lista.reduce((s, c) => s + (Number(c.valor) || 0), 0);
-  linhas += `<tr class="total"><td colspan="4">TOTAL${busca ? ' (filtrado)' : ''}</td><td class="num-ro">${moeda(total)}</td><td colspan="${COLS_CARROS.length - 4}"></td></tr>`;
+  const iValor = COLS_CARROS.findIndex(c => c[0] === 'valor');
+  linhas += `<tr class="total"><td colspan="${iValor}">TOTAL${busca ? ' (filtrado)' : ''}</td><td class="num-ro">${moeda(total)}</td><td colspan="${COLS_CARROS.length - iValor}"></td></tr>`;
 
   $('#grade').innerHTML = `
     <table class="grade grade-fixa">
@@ -265,7 +289,8 @@ function renderCarros() {
       <thead><tr>${COLS_CARROS.map(([, t, tipo]) => `<th class="${tipo === 'valor' || tipo === 'int' ? 'num' : ''}">${t}</th>`).join('')}<th class="col-x"></th></tr></thead>
       <tbody>${linhas}</tbody>
     </table>
-    <div class="nota-rodape">Vencimento = data da nota + prazo. Linhas com marca amarela à esquerda têm a mesma placa e o mesmo valor de outra nota (possível duplicidade).</div>`;
+    <div class="nota-rodape">Vencimento = data da nota + prazo. Para gerar um boleto com várias notas, marque as caixinhas das notas da mesma concessionária e clique em "Gerar boleto". Linhas com marca amarela à esquerda têm a mesma placa e o mesmo valor de outra nota (possível duplicidade).</div>`;
+  atualizarBotaoBoleto();
 }
 
 // ===== aba: vencimentos =====
@@ -394,6 +419,12 @@ function rerender() {
 
 $('#grade').addEventListener('change', e => {
   const el = e.target;
+  if (el.classList.contains('sel-nota')) {
+    el.checked ? selecionadas.add(el.dataset.id) : selecionadas.delete(el.dataset.id);
+    el.closest('tr').classList.toggle('selecionada', el.checked);
+    atualizarBotaoBoleto();
+    return;
+  }
   const { t, id, c } = el.dataset;
   if (!t || !c) return;
   if (t === 'dadosNF') {
@@ -425,12 +456,23 @@ $('#grade').addEventListener('keydown', e => {
 });
 
 $('#grade').addEventListener('click', e => {
+  const gerar = e.target.closest('[data-gerar]');
+  if (gerar) { abrirBoleto([gerar.dataset.gerar]); return; }
+  const cop = e.target.closest('[data-copiar-bol]');
+  if (cop) {
+    e.preventDefault();
+    const b = achar('carros', cop.dataset.copiarBol)?.boleto;
+    const link = b?.invoiceUrl || b?.bankSlipUrl;
+    if (link) navigator.clipboard.writeText(link).then(() => avisar('Link do boleto copiado.'), () => prompt('Copie:', link));
+    return;
+  }
   const del = e.target.closest('[data-del]');
   if (del) {
     const t = del.dataset.del;
     const item = achar(t, del.dataset.id);
     const nome = t === 'carros' ? `a nota ${item?.nota || '(sem número)'}` : 'este recebimento';
-    if (!confirm(`Apagar ${nome}?`)) return;
+    const avisoBol = item?.boleto ? '\n\nEssa nota tem boleto no Asaas. Apagar aqui NÃO cancela o boleto (cancele em Cobranças).' : '';
+    if (!confirm(`Apagar ${nome}?${avisoBol}`)) return;
     dados[t] = dados[t].filter(x => x.id !== del.dataset.id);
     marcarAlterado();
     render();
@@ -463,6 +505,107 @@ $('#btn-linha').addEventListener('click', () => {
 function vazioFolha(msg) {
   $('#grade').innerHTML = `<div class="vazio-folha">${esc(msg)}<br />
     <button class="btn btn-primario" onclick="document.getElementById('btn-importar').click()">Importar planilha .xlsx</button></div>`;
+}
+
+// ===== boleto a partir das notas =====
+function atualizarBotaoBoleto() {
+  const btn = $('#btn-boleto');
+  const notas = [...selecionadas].map(id => achar('carros', id)).filter(Boolean);
+  if (aba !== 'carros' || !notas.length) { btn.hidden = true; return; }
+  const total = notas.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  btn.textContent = `Gerar boleto · ${notas.length} nota${notas.length === 1 ? '' : 's'} · ${moeda(total)}`;
+  btn.hidden = false;
+}
+$('#btn-boleto').addEventListener('click', () => abrirBoleto([...selecionadas]));
+
+let notasBoleto = [];
+function abrirBoleto(ids) {
+  const notas = ids.map(id => achar('carros', id)).filter(Boolean);
+  const comBoleto = notas.filter(c => c.boleto);
+  if (comBoleto.length) return avisar(`A nota ${comBoleto.map(c => c.nota).join(', ')} já tem boleto. Desmarque para continuar.`);
+  const cnpjs = new Set(notas.map(c => String(c.cnpj || '').replace(/\D/g, '')));
+  if (cnpjs.size > 1) return avisar('Selecione só notas da mesma concessionária (mesmo CNPJ) para juntar num boleto.');
+  const n0 = notas[0];
+  if (!String(n0.cnpj || '').replace(/\D/g, '')) return avisar(`Preencha o CNPJ da concessionária na nota ${n0.nota}.`);
+
+  notasBoleto = notas;
+  const total = notas.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  // Vence no último vencimento previsto das notas; se já passou, daqui a 3 dias
+  const venc = notas.map(vencimento).filter(Boolean).sort().pop();
+  const minimo = hojeISO();
+  const f = $('#form-boleto');
+  $('#bol-nome').textContent = n0.concessionaria || '—';
+  $('#bol-cnpj').textContent = n0.cnpj;
+  $('#bol-notas').textContent = notas.map(c => c.nota).join(', ');
+  $('#bol-total').textContent = moeda(total);
+  f.vencimento.min = minimo;
+  f.vencimento.value = venc && venc >= minimo ? venc : somarDias(minimo, 3);
+  f.descricao.value = `NF ${notas.map(c => c.nota).join(', ')} · ` +
+    notas.map(c => [c.carro, c.placa].filter(Boolean).join(' ')).filter(Boolean).join('; ');
+  f.descricao.value = f.descricao.value.slice(0, 500);
+  $('#bol-dica').textContent = venc && venc < minimo
+    ? `O vencimento previsto (${dataBR(venc)}) já passou, então sugeri daqui a 3 dias.`
+    : 'Vencimento sugerido: o vencimento previsto das notas (data + prazo).';
+  $('#bol-erro').hidden = true;
+  $('#modal-boleto').showModal();
+}
+
+$('#form-boleto').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target;
+  const btn = $('#bol-gerar');
+  btn.disabled = true; btn.textContent = 'Gerando…';
+  $('#bol-erro').hidden = true;
+  try {
+    const n0 = notasBoleto[0];
+    const p = await api('boleto-notas', {
+      method: 'POST',
+      body: {
+        cnpj: n0.cnpj,
+        nome: n0.concessionaria,
+        notas: notasBoleto.map(c => c.nota),
+        valor: notasBoleto.reduce((s, c) => s + (Number(c.valor) || 0), 0),
+        vencimento: f.vencimento.value,
+        descricao: f.descricao.value,
+      },
+    });
+    const boleto = { id: p.id, status: p.status, vencimento: p.dueDate, valor: p.value, bankSlipUrl: p.bankSlipUrl, invoiceUrl: p.invoiceUrl, notas: notasBoleto.map(c => c.nota) };
+    notasBoleto.forEach(c => { c.boleto = boleto; selecionadas.delete(c.id); });
+    $('#modal-boleto').close();
+    marcarAlterado();
+    render();
+    avisar('Boleto gerado no Asaas.');
+    if (p.bankSlipUrl) window.open(p.bankSlipUrl, '_blank', 'noopener');
+  } catch (err) {
+    $('#bol-erro').textContent = err.message;
+    $('#bol-erro').hidden = false;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Gerar boleto no Asaas';
+  }
+});
+
+$$('dialog').forEach(d => d.addEventListener('click', e => {
+  if (e.target === d || e.target.closest('[data-fechar]')) d.close();
+}));
+
+// Consulta o Asaas e atualiza as notas: boleto pago marca a nota como Pago; boleto apagado libera a nota
+async function sincronizarBoletos() {
+  const abertos = [...new Set(dados.carros.filter(c => c.boleto && !PAGO.includes(c.boleto.status)).map(c => c.boleto.id))];
+  if (!abertos.length) return;
+  let mudou = false;
+  for (let i = 0; i < abertos.length; i += 50) {
+    let r;
+    try { r = await api('boleto-notas?ids=' + abertos.slice(i, i + 50).join(',')); } catch { return; }
+    for (const b of r.data || []) {
+      if (b.erro) continue;
+      for (const c of dados.carros.filter(x => x.boleto?.id === b.id)) {
+        if (b.status === 'DELETED') { delete c.boleto; mudou = true; continue; }
+        if (c.boleto.status !== b.status) { c.boleto.status = b.status; mudou = true; }
+        if (PAGO.includes(b.status) && c.situacao !== 'Pago') { c.situacao = 'Pago'; mudou = true; }
+      }
+    }
+  }
+  if (mudou) { marcarAlterado(); render(); avisar('Situação dos boletos atualizada.'); }
 }
 
 // ===== importar / exportar .xlsx =====
@@ -613,8 +756,8 @@ $('#btn-exportar').addEventListener('click', async () => {
     const wb = XLSX.utils.book_new();
     const carros = [...dados.carros].sort((a, b) => (a.data || '').localeCompare(b.data || '') || (Number(a.nota) || 0) - (Number(b.nota) || 0));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
-      ['Nota', 'Concessionária', 'Carro', 'Placa', 'Valor (R$)', 'Data da nota', 'Prazo (dias)', 'Vencimento', 'Situação', 'Triagem', 'CNPJ', 'Observação'],
-      ...carros.map(c => [Number(c.nota) || c.nota, c.concessionaria, c.carro, c.placa, Number(c.valor) || 0, dataBR(c.data), c.prazo, dataBR(vencimento(c)), situacao(c)[0], c.triagem, c.cnpj, c.obs]),
+      ['Nota', 'Concessionária', 'Carro', 'Placa', 'Valor (R$)', 'Data da nota', 'Prazo (dias)', 'Vencimento', 'Situação', 'Boleto', 'Triagem', 'CNPJ', 'Observação'],
+      ...carros.map(c => [Number(c.nota) || c.nota, c.concessionaria, c.carro, c.placa, Number(c.valor) || 0, dataBR(c.data), c.prazo, dataBR(vencimento(c)), situacao(c)[0], c.boleto ? (STATUS_BOLETO[c.boleto.status]?.[0] || c.boleto.status) + ' · ' + (c.boleto.invoiceUrl || '') : '', c.triagem, c.cnpj, c.obs]),
       [], ['TOTAL', '', '', '', carros.reduce((s, c) => s + (Number(c.valor) || 0), 0)],
     ]), 'Carros');
 

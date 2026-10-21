@@ -272,6 +272,8 @@ $('#btn-salvar-cliente').addEventListener('click', async e => {
 
 // ===== nova cobrança: planos =====
 // Preço cheio do ano; o anual sai com 50% de desconto no Pix e o cartão parcela o valor cheio com juros
+// Vitrine de planos (fictícia, guardada para usar depois): true mostra na tela inicial e no formulário
+const MOSTRAR_PLANOS = false;
 const PRODUTO = 'Emissão para CNPJ LTDA';
 // Aviso em destaque acima dos planos (deixe '' para esconder)
 const AVISO_PLANOS = 'Seu prazo de teste acabou ontem. Atualize a página para verificar o novo valor.';
@@ -335,7 +337,11 @@ function simulacaoCartao() {
 $('#planos').innerHTML = cartoesPlanos(false) +
   '<button type="button" class="plano plano-avulso" role="radio" data-plano="">Outro valor (avulso)</button>';
 $('#planos-vitrine').innerHTML = cartoesPlanos(true);
-if (AVISO_PLANOS) {
+if (!MOSTRAR_PLANOS) {
+  $('#vitrine').hidden = true;
+  $('#planos').hidden = true;
+}
+if (AVISO_PLANOS && MOSTRAR_PLANOS) {
   $('#aviso-planos').innerHTML = `<strong>Atenção:</strong> ${esc(AVISO_PLANOS)}`;
   $('#aviso-planos').hidden = false;
 }
@@ -398,7 +404,7 @@ No anual você paga metade e resolve o ano inteiro de uma vez. Posso te mandar o
 
 function atualizarProposta() {
   const link = $('#btn-proposta');
-  if (!clienteSelecionado) { link.hidden = true; return; }
+  if (!clienteSelecionado || !MOSTRAR_PLANOS) { link.hidden = true; return; }
   const tel = (clienteSelecionado.mobilePhone || clienteSelecionado.phone || '').replace(/\D/g, '');
   const nome = (clienteSelecionado.name || '').split(' ')[0];
   link.href = `https://wa.me/${tel ? '55' + tel.replace(/^55(?=\d{10,11}$)/, '') : ''}?text=${encodeURIComponent(mensagemPropostaPlanos(nome))}`;
@@ -435,7 +441,7 @@ selParcelas.addEventListener('change', () => { aplicarValorPlano(); atualizarDic
 selForma.addEventListener('change', atualizarDicaParcelas);
 formNovo.valor.addEventListener('input', atualizarDicaParcelas);
 
-function abrirNovoBoleto(plano = 'anual', n) {
+function abrirNovoBoleto(plano = MOSTRAR_PLANOS ? 'anual' : '', n) {
   formNovo.reset();
   descricaoAuto = '';
   $('#novo-erro').hidden = true;

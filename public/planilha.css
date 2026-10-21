@@ -52,6 +52,17 @@ table.grade-fixa { table-layout: fixed; width: max-content; min-width: 100%; }
 .sit-aberto { background: var(--primaria-suave); color: var(--primaria); }
 .grade select.sel-sit { font-weight: 600; }
 
+/* seleção e boleto das notas */
+.col-sel { text-align: center; }
+.grade td.col-sel { vertical-align: middle; }
+.col-sel input { display: block; width: 16px; height: 16px; padding: 0; margin: 0 auto; cursor: pointer; accent-color: var(--primaria); }
+.grade tr.selecionada td { background: var(--primaria-suave); }
+.td-bol { display: flex; align-items: center; gap: 6px; padding: 0 8px; }
+.btn-mini { border: 1px solid var(--borda); background: var(--superficie); color: var(--primaria); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn-mini:hover { border-color: var(--primaria); }
+.td-bol a { font-size: 12.5px; font-weight: 600; color: var(--primaria); text-decoration: none; }
+.td-bol .sit { margin: 0; }
+
 .vazio-folha { padding: 48px 20px; text-align: center; color: var(--texto-3); }
 .vazio-folha .btn { margin-top: 14px; }
 
