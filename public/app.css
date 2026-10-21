@@ -229,11 +229,37 @@ details.grupo[open] { gap: 12px; }
 .vitrine { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px 20px 20px; }
 .vitrine-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 .vitrine-topo h2 { margin: 0; font-size: 16px; }
-.planos-vitrine { grid-template-columns: 1.25fr 1fr; }
+.planos-vitrine { grid-template-columns: 1.25fr 1fr; align-items: start; }
 .planos-vitrine .plano { padding-bottom: 16px; }
 .planos-vitrine .plano-preco { font-size: 30px; }
 .plano-cta { margin-top: 12px; align-self: flex-start; font-size: 14px; font-weight: 600; color: var(--primaria); }
 .plano-destaque .plano-cta { background: var(--primaria); color: #fff; padding: 8px 14px; border-radius: 8px; }
+
+/* simulação de parcelas do cartão */
+.plano-sim { cursor: default; }
+.plano-sim:hover { border-color: var(--borda); }
+.sim-lista { margin-top: 10px; display: flex; flex-direction: column; border: 1px solid var(--borda); border-radius: 8px; overflow: hidden; }
+.sim-linha {
+  display: grid; grid-template-columns: 44px 1fr auto; align-items: baseline; gap: 10px;
+  background: none; border: 0; border-bottom: 1px solid var(--borda);
+  padding: 7px 12px; text-align: left; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.sim-linha:last-child { border-bottom: 0; }
+.sim-linha:nth-child(even) { background: var(--fundo); }
+.sim-linha:hover { background: var(--primaria-suave); }
+.sim-n { font-weight: 700; color: var(--texto-2); }
+.sim-parcela { font-weight: 700; font-size: 15px; }
+.sim-total { font-size: 13px; color: var(--texto-3); }
+
+/* aviso acima dos planos */
+.aviso-planos {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline;
+  background: var(--alerta-suave); color: var(--alerta);
+  border: 1px solid color-mix(in srgb, var(--alerta) 35%, transparent);
+  border-left: 4px solid var(--alerta);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 22px;
+  font-size: 15px; font-weight: 500;
+}
 
 /* ---------- planos ---------- */
 .planos { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; }

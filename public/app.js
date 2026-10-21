@@ -271,15 +271,29 @@ $('#btn-salvar-cliente').addEventListener('click', async e => {
 });
 
 // ===== nova cobrança: planos =====
-// Preço cheio do ano; o anual sai com 50% de desconto no Pix e o mensal parcela o valor cheio em 12x no cartão
+// Preço cheio do ano; o anual sai com 50% de desconto no Pix e o cartão parcela o valor cheio com juros
 const PRODUTO = 'Emissão para CNPJ LTDA';
+// Aviso em destaque acima dos planos (deixe '' para esconder)
+const AVISO_PLANOS = 'Seu prazo de teste acabou ontem. Atualize a página para verificar o novo valor.';
 const VALOR_CHEIO = 1070;
+const JUROS_CARTAO_MES = 0.0299; // 2,99% ao mês a partir de 2x (tabela Price)
+const MAX_PARCELAS = 12;
+
+// Total no cartão em n vezes: 1x sem juros; de 2x em diante com juros compostos
+function totalCartao(n) {
+  if (n <= 1) return VALOR_CHEIO;
+  const i = JUROS_CARTAO_MES;
+  const parcela = Math.round(VALOR_CHEIO * i / (1 - Math.pow(1 + i, -n)) * 100) / 100;
+  return Math.round(parcela * n * 100) / 100;
+}
+const parcelaCartao = n => Math.round(totalCartao(n) / n * 100) / 100;
+
 const PLANOS = {
-  anual: { nome: 'Anual', valor: 535, parcelas: 1, forma: 'PIX', extra: ' (Pix com desconto)' },
-  mensal: { nome: 'Mensal', valor: VALOR_CHEIO, parcelas: 12, forma: 'CREDIT_CARD', extra: ' (cartão 12x)' },
+  anual: { nome: 'Anual', parcelas: 1, forma: 'PIX', extra: () => ' (Pix com desconto)', valor: () => 535 },
+  mensal: { nome: 'Cartão de crédito', parcelas: MAX_PARCELAS, forma: 'CREDIT_CARD', extra: n => ` ${n}x`, valor: n => totalCartao(n) },
 };
-const parcelaMensal = Math.round(VALOR_CHEIO / 12 * 100) / 100;
-const economiaAnual = VALOR_CHEIO - PLANOS.anual.valor;
+const VALOR_ANUAL = PLANOS.anual.valor();
+const economiaAnual = VALOR_CHEIO - VALOR_ANUAL;
 
 function cartoesPlanos(comCta) {
   const cta = t => comCta ? `<span class="plano-cta">${t}</span>` : '';
@@ -288,43 +302,59 @@ function cartoesPlanos(comCta) {
     <span class="plano-selo">Mais vantajoso · 50% off no Pix</span>
     <span class="plano-nome">Anual</span>
     <span class="plano-de">de ${moeda(VALOR_CHEIO)}</span>
-    <span class="plano-preco">${moeda(PLANOS.anual.valor)}</span>
+    <span class="plano-preco">${moeda(VALOR_ANUAL)}</span>
     <span class="plano-pix">À vista no Pix</span>
-    <span class="plano-info">só ${moeda(PLANOS.anual.valor / 12)}/mês · cai na hora</span>
+    <span class="plano-info">só ${moeda(VALOR_ANUAL / 12)}/mês · cai na hora</span>
     <span class="plano-economia">Economia de ${moeda(economiaAnual)}</span>
     ${cta('Gerar Pix do anual')}
   </button>
+  ${comCta ? simulacaoCartao() : `
   <button type="button" class="plano" role="radio" data-plano="mensal">
-    <span class="plano-nome">Mensal</span>
-    <span class="plano-preco">12x ${moeda(parcelaMensal)}</span>
-    <span class="plano-cartao">no cartão de crédito</span>
-    <span class="plano-info">total de ${moeda(VALOR_CHEIO)} no ano</span>
-    ${cta('Gerar link do cartão')}
-  </button>`;
+    <span class="plano-nome">Cartão de crédito</span>
+    <span class="plano-preco">até ${MAX_PARCELAS}x ${moeda(parcelaCartao(MAX_PARCELAS))}</span>
+    <span class="plano-info">1x de ${moeda(VALOR_CHEIO)} · parcelado com juros</span>
+  </button>`}`;
+}
+
+// Tabela de parcelas do cartão (tela inicial): cada linha gera a cobrança naquele número de vezes
+function simulacaoCartao() {
+  const linhas = [];
+  for (let n = 1; n <= MAX_PARCELAS; n++) {
+    linhas.push(`<button type="button" class="sim-linha" data-plano="mensal" data-n="${n}">
+      <span class="sim-n">${n}x</span>
+      <span class="sim-parcela">${moeda(parcelaCartao(n))}</span>
+      <span class="sim-total">${n === 1 ? 'sem juros' : 'total ' + moeda(totalCartao(n))}</span>
+    </button>`);
+  }
+  return `<div class="plano plano-sim">
+    <span class="plano-nome">Cartão de crédito</span>
+    <span class="plano-info">Simulação · clique na parcela para gerar o link</span>
+    <div class="sim-lista">${linhas.join('')}</div>
+  </div>`;
 }
 $('#planos').innerHTML = cartoesPlanos(false) +
   '<button type="button" class="plano plano-avulso" role="radio" data-plano="">Outro valor (avulso)</button>';
 $('#planos-vitrine').innerHTML = cartoesPlanos(true);
+if (AVISO_PLANOS) {
+  $('#aviso-planos').innerHTML = `<strong>Atenção:</strong> ${esc(AVISO_PLANOS)}`;
+  $('#aviso-planos').hidden = false;
+}
 
 let planoAtual = '';
 let descricaoAuto = '';
 
-function escolherPlano(chave) {
+function escolherPlano(chave, n) {
   planoAtual = chave;
   $$('#planos .plano').forEach(b => b.setAttribute('aria-checked', String(b.dataset.plano === chave)));
   const p = PLANOS[chave];
   formNovo.valor.readOnly = !!p;
-  selParcelas.disabled = !!p;
+  // No cartão dá para trocar o número de parcelas; o valor acompanha a simulação
+  selParcelas.disabled = !!p && chave !== 'mensal';
   selForma.disabled = !!p;
   if (p) {
-    formNovo.valor.value = p.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    selParcelas.value = p.parcelas;
     selForma.value = p.forma;
-    // Só substitui a descrição se ela ainda for a automática (não apaga o que foi digitado)
-    if (!formNovo.descricao.value || formNovo.descricao.value === descricaoAuto) {
-      descricaoAuto = `${PRODUTO} · Plano ${p.nome}${p.extra || ''}`;
-      formNovo.descricao.value = descricaoAuto;
-    }
+    selParcelas.value = n || p.parcelas;
+    aplicarValorPlano();
   } else {
     if (formNovo.descricao.value === descricaoAuto) formNovo.descricao.value = '';
     formNovo.valor.value = '';
@@ -334,6 +364,18 @@ function escolherPlano(chave) {
   }
   atualizarDicaParcelas();
 }
+
+function aplicarValorPlano() {
+  const p = PLANOS[planoAtual];
+  if (!p) return;
+  const n = Number(selParcelas.value) || 1;
+  formNovo.valor.value = p.valor(n).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  // Só substitui a descrição se ela ainda for a automática (não apaga o que foi digitado)
+  if (!formNovo.descricao.value || formNovo.descricao.value === descricaoAuto) {
+    descricaoAuto = `${PRODUTO} · Plano ${p.nome}${p.extra(n)}`;
+    formNovo.descricao.value = descricaoAuto;
+  }
+}
 $('#planos').addEventListener('click', e => {
   const b = e.target.closest('.plano');
   if (b) escolherPlano(b.dataset.plano);
@@ -342,12 +384,14 @@ $('#planos').addEventListener('click', e => {
 function mensagemPropostaPlanos(nome) {
   return `Olá${nome ? ', ' + nome : ''}! Seguem as opções da GLPS para ${PRODUTO}:
 
-⭐ *Plano Anual: ${moeda(PLANOS.anual.valor)} à vista no Pix* (50% de desconto)
-Dá só ${moeda(PLANOS.anual.valor / 12)} por mês.
-Você economiza ${moeda(economiaAnual)} no ano.
+⭐ *Plano Anual: ${moeda(VALOR_ANUAL)} à vista no Pix* (50% de desconto)
+Dá só ${moeda(VALOR_ANUAL / 12)} por mês.
 
-Plano Mensal: 12x de ${moeda(parcelaMensal)} no cartão de crédito
-Total de ${moeda(VALOR_CHEIO)} no ano.
+No cartão de crédito:
+1x de ${moeda(VALOR_CHEIO)}
+3x de ${moeda(parcelaCartao(3))} (total ${moeda(totalCartao(3))})
+6x de ${moeda(parcelaCartao(6))} (total ${moeda(totalCartao(6))})
+12x de ${moeda(parcelaCartao(12))} (total ${moeda(totalCartao(12))})
 
 No anual você paga metade e resolve o ano inteiro de uma vez. Posso te mandar o Pix do anual?`;
 }
@@ -375,7 +419,7 @@ function atualizarDicaParcelas() {
   selParcelas.querySelectorAll('option').forEach(o => (o.disabled = forma === 'PIX' && o.value !== '1'));
   if (forma === 'PIX' && n > 1) selParcelas.value = 1;
   if (planoAtual === 'mensal') {
-    dica.textContent = `Link de pagamento no cartão em 12x de ${moeda(parcelaMensal)}. O cliente digita o cartão na página segura do Asaas. No anual pagaria ${moeda(PLANOS.anual.valor)} no Pix e economizaria ${moeda(economiaAnual)}.`;
+    dica.textContent = `Link de pagamento no cartão em ${n}x de ${moeda(parcelaCartao(n))} (total ${moeda(totalCartao(n))}). O cliente digita o cartão na página segura do Asaas. No Pix do anual pagaria só ${moeda(VALOR_ANUAL)}.`;
     dica.hidden = false;
   } else if (planoAtual === 'anual') {
     dica.textContent = 'Cobrança Pix: o cliente paga pelo QR Code ou copia e cola e o dinheiro cai na hora.';
@@ -387,11 +431,11 @@ function atualizarDicaParcelas() {
     dica.hidden = false;
   } else dica.hidden = true;
 }
-selParcelas.addEventListener('change', atualizarDicaParcelas);
+selParcelas.addEventListener('change', () => { aplicarValorPlano(); atualizarDicaParcelas(); });
 selForma.addEventListener('change', atualizarDicaParcelas);
 formNovo.valor.addEventListener('input', atualizarDicaParcelas);
 
-function abrirNovoBoleto(plano = 'anual') {
+function abrirNovoBoleto(plano = 'anual', n) {
   formNovo.reset();
   descricaoAuto = '';
   $('#novo-erro').hidden = true;
@@ -399,14 +443,14 @@ function abrirNovoBoleto(plano = 'anual') {
   formNovo.vencimento.min = hojeISO();
   formNovo.vencimento.value = somarDias(hojeISO(), 3);
   modoBusca();
-  escolherPlano(plano); // sem escolha explícita, o anual já vem marcado
+  escolherPlano(plano, n); // sem escolha explícita, o anual já vem marcado
   $('#modal-novo').showModal();
   $('#cliente-busca').focus();
 }
 $('#btn-novo').addEventListener('click', () => abrirNovoBoleto());
 $('#planos-vitrine').addEventListener('click', e => {
-  const b = e.target.closest('.plano');
-  if (b) abrirNovoBoleto(b.dataset.plano);
+  const b = e.target.closest('[data-plano]');
+  if (b) abrirNovoBoleto(b.dataset.plano, Number(b.dataset.n) || undefined);
 });
 
 formNovo.addEventListener('submit', async e => {

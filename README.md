@@ -4,7 +4,7 @@ Painel para emitir e acompanhar boletos registrados pelo **Asaas**. Cada boleto 
 
 ## O que o painel faz
 
-- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista no Pix, 50% off) e Mensal (12x de R$ 89,17 no cartão de crédito). O anual já vem marcado
+- Planos prontos de **Emissão para CNPJ LTDA**: Anual (R$ 535,00 à vista no Pix, 50% off) e cartão de crédito de 1x (R$ 1.070,00) a 12x com juros de 2,99% a.m., com simulação de parcelas na tela inicial. O anual já vem marcado
 - Cobranças por boleto (com Pix junto), Pix ou cartão de crédito
 - Envia a comparação dos planos pelo WhatsApp, puxando o cliente para o anual
 - Emite boletos avulsos à vista ou parcelados (até 12x), com multa, juros e desconto
@@ -27,7 +27,7 @@ Os dados da planilha **não** ficam no código (o repositório é público): ele
 
 ## Mudar preços dos planos
 
-Os valores ficam no começo da seção de planos em `public/app.js` (`PRODUTO`, `VALOR_CHEIO` e `PLANOS`).
+Os valores ficam no começo da seção de planos em `public/app.js` (`PRODUTO`, `AVISO_PLANOS`, `VALOR_CHEIO`, `JUROS_CARTAO_MES` e `PLANOS`).
 
 ## Como colocar no ar (Vercel)
 
