@@ -51,6 +51,7 @@ let dados = vazio();
 let semBanco = false;
 let aba = 'carros';
 let busca = '';
+let rotuloGerar = 'Gerar boleto'; // muda conforme o banco emissor configurado
 const selecionadas = new Set(); // notas marcadas para gerar boleto (não é salvo)
 
 function vazio() {
@@ -559,6 +560,7 @@ function abrirBoleto(ids) {
   $('#bol-dica').textContent = venc && venc < minimo
     ? `O vencimento previsto (${dataBR(venc)}) já passou, então sugeri daqui a 3 dias.`
     : 'Vencimento sugerido: o vencimento previsto das notas (data + prazo).';
+  if (rotuloGerar.includes('Asaas')) $('#bol-dica').textContent += ' Atenção: a Efí ainda não foi conectada, então este boleto sai pelo Asaas.';
   $('#bol-erro').hidden = true;
   $('#modal-boleto').showModal();
 }
@@ -587,13 +589,13 @@ $('#form-boleto').addEventListener('submit', async e => {
     $('#modal-boleto').close();
     marcarAlterado();
     render();
-    avisar('Boleto gerado no Asaas.');
+    avisar('Boleto gerado.');
     if (p.bankSlipUrl) window.open(p.bankSlipUrl, '_blank', 'noopener');
   } catch (err) {
     $('#bol-erro').textContent = err.message;
     $('#bol-erro').hidden = false;
   } finally {
-    btn.disabled = false; btn.textContent = 'Gerar boleto no Asaas';
+    btn.disabled = false; btn.textContent = rotuloGerar;
   }
 });
 
@@ -808,5 +810,9 @@ api('sessao').then(r => {
   if (r.provedor === 'efi') $('#link-cobrancas').hidden = true;
   $('#ambiente').textContent = r.provedor === 'efi' ? 'Efí · homologação' : 'Sandbox';
   $('#ambiente').hidden = r.ambiente !== 'sandbox';
+  // Some sozinho quando as chaves da Efí forem cadastradas na Vercel
+  $('#status-efi').hidden = r.provedor === 'efi';
+  rotuloGerar = r.provedor === 'efi' ? 'Gerar boleto pela Efí' : 'Gerar boleto (Asaas)';
+  $('#bol-gerar').textContent = rotuloGerar;
   carregar();
 }).catch(() => (location.href = '/'));

@@ -629,6 +629,8 @@ api('sessao')
   .then(r => {
     provedor = r.provedor;
     $('#ambiente').hidden = r.ambiente !== 'sandbox';
+    // Some sozinho quando as chaves da Efí forem cadastradas na Vercel
+    $('#status-efi').hidden = provedor === 'efi';
     if (r.logado && provedor === 'efi') return (location.href = '/planilha');
     r.logado ? mostrarPainel() : mostrarLogin();
   })
